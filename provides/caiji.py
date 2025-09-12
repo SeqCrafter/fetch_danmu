@@ -5,19 +5,6 @@ import re
 API_URL = "https://www.caiji.cyou/api.php/provide/vod/"
 
 
-async def get_id(vod_name: str, client: requests.AsyncSession) -> Optional[int]:
-    params = {
-        "ac": "list",
-        "wd": vod_name,
-    }
-    res = await client.get(API_URL, params=params, impersonate="chrome124")
-    if res.status_code != 200:
-        return None
-    data = res.json()
-    ## 只返回第一个最佳匹配，没想到更好的方法
-    return data["list"][0]["vod_id"]
-
-
 def correct_episode_str(episode_str: str) -> int:
     if not episode_str:
         return -1
@@ -33,10 +20,12 @@ def correct_episode_str(episode_str: str) -> int:
         return -1
 
 
-async def get_vod_urls(vod_id: int, client: requests.AsyncSession) -> Optional[dict[str, dict[int, str]]]:
+async def get_vod_urls_direct(
+    vod_name: str, client: requests.AsyncSession
+) -> Optional[dict[str, dict[int, str]]]:
     params = {
         "ac": "detail",
-        "ids": vod_id,
+        "wd": vod_name,
     }
     vod_links = {}
     res = await client.get(API_URL, params=params, impersonate="chrome124")
@@ -69,10 +58,7 @@ async def get_vod_urls(vod_id: int, client: requests.AsyncSession) -> Optional[d
 async def get_vod_links_from_name(vod_name: str) -> Optional[dict[str, dict[int, str]]]:
     vod_links = {}
     async with requests.AsyncSession() as client:
-        vod_id = await get_id(vod_name, client)
-        if not vod_id:
-            return None
-        vod_links = await get_vod_urls(vod_id, client)
+        vod_links = await get_vod_urls_direct(vod_name, client)
         if vod_links:
             return vod_links
     return vod_links
