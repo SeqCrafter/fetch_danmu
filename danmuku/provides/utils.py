@@ -20,6 +20,8 @@ def other2http(platform_url_list: List[str]):
                     url = f"https://v.qq.com/x/cover/{query.get('cid')[0]}/{query.get('vid')[0]}.html"
                 case ["iqiyi"]:
                     url = f"http://www.iqiyi.com?tvid={query.get('tvid')[0]}"
+                case ["youku"]:
+                    url = f"https://v.youku.com/video?s={query.get('showid')[0]}&refer={query.get('refer')[0]}"
         ret_list.append(url)
     return ret_list
 

@@ -6,6 +6,14 @@ from typing import Optional
 import datetime
 
 
+def modify_url(url: str) -> str:
+    if "m.youku.com" in url:
+        return url.replace("m.youku.com", "v.youku.com").replace(
+            "alipay_video", "v_show"
+        )
+    return url
+
+
 async def get_platform_link(douban_id: str) -> dict[str, list[str]]:
     async with requests.AsyncSession() as client:
         res = await client.get(
@@ -20,9 +28,9 @@ async def get_platform_link(douban_id: str) -> dict[str, list[str]]:
     url_dict = {}
     for url in urls:
         if url[1] in url_dict.keys():
-            url_dict[str(url[1])].append(parse.unquote(url[0]))
+            url_dict[str(url[1])].append(modify_url(parse.unquote(url[0])))
         else:
-            url_dict[str(url[1])] = [parse.unquote(url[0])]
+            url_dict[str(url[1])] = [modify_url(parse.unquote(url[0]))]
 
     return url_dict
 

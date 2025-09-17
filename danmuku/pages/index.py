@@ -3,7 +3,7 @@ from ..template import template
 from ..provides.mtzy import search_vod_names
 from ..components.search_media_cards import search_media_cards_component
 from ..components.douban_recommend_cards import douban_recommend_cards_component
-from ..provides.doubai import douban_get_recommend_data
+from ..provides.douban import douban_get_recommend_data
 from typing import Any, Dict, List
 
 
