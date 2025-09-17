@@ -5,7 +5,7 @@ from .provides.souhu import get_souhu_danmu, get_souhu_episode_url
 from .provides.tencent import get_tencent_danmu, get_tencent_episode_url
 from .provides.youku import get_youku_danmu, get_youku_episode_url
 from .provides.utils import other2http
-from .provides.doubai import (
+from .provides.douban import (
     get_platform_link,
     douban_get_first_url,
     select_by_360,
