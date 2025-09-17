@@ -1,12 +1,11 @@
 import re
 from typing import List
-from urllib.parse import urlparse
-from urllib import parse
+from urllib import parse as urllib_parse
 
 
 def resolve_url_query(url: str) -> dict[str, list[str]]:
-    _url = urlparse(url)
-    parad = parse.parse_qs(_url.query)
+    _url = urllib_parse.urlparse(url)
+    parad = urllib_parse.parse_qs(_url.query)
     return parad
 
 
