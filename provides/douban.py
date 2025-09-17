@@ -9,7 +9,7 @@ async def get_platform_link(douban_id: str) -> dict[str, list[str]]:
     async with requests.AsyncSession() as client:
         ## use proxy to fetch data
         res = await client.get(
-            f"https://m.douban.cmliussss.net/subject/{douban_id}/",
+            f"https://movie.douban.cmliussss.net/subject/{douban_id}/",
             headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             },
