@@ -1,11 +1,8 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Annotated, List, Any
 from urllib.parse import unquote_plus
-import httpx
-import io
 from .functions import (
     get_danmu_by_url,
     get_danmu_by_id,
@@ -106,7 +103,7 @@ async def danmu_by_title_caiji(
         all_danmu = await get_danmu_by_title_caiji(title, episode_number)
     else:
         all_danmu = await get_danmu_by_title_caiji(title, 1)
-    ## to avoid type error
+
     print(season_number)
 
     return {
@@ -115,51 +112,3 @@ async def danmu_by_title_caiji(
         "danmu": len(all_danmu),
         "danmuku": all_danmu,
     }
-
-
-@fastapi_app.get("/api/proxy/image")
-async def proxy_image(url: Annotated[str, Query(description="图片URL地址")]):
-    """代理图片请求，解决跨域和防盗链问题"""
-    try:
-        # 解码URL
-        decoded_url = unquote_plus(url)
-
-        # 设置适当的请求头来模拟浏览器访问
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": "https://movie.douban.com/",
-            "Accept": "image/webp,image/apng,image/*,*/*;q=0.8",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-        }
-
-        async with httpx.AsyncClient() as client:
-            response = await client.get(decoded_url, headers=headers, timeout=30.0)
-            response.raise_for_status()
-
-            # 获取内容类型
-            content_type = response.headers.get("content-type", "image/jpeg")
-
-            # 创建流式响应
-            def generate():
-                yield response.content
-
-            return StreamingResponse(
-                io.BytesIO(response.content),
-                media_type=content_type,
-                headers={
-                    "Cache-Control": "public, max-age=86400",  # 缓存1天
-                    "Access-Control-Allow-Origin": "*",
-                },
-            )
-
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=500, detail=f"请求图片失败: {str(e)}")
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(
-            status_code=e.response.status_code,
-            detail=f"图片服务器返回错误: {e.response.status_code}",
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"代理图片时发生错误: {str(e)}")

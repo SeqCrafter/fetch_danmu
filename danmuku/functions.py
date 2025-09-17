@@ -13,6 +13,7 @@ from .provides.doubai import (
 )
 import asyncio
 from .provides.caiji import get_vod_links_from_name
+from .provides.hls import get_danmu_from_hls
 from typing import List, Dict, Optional, Any
 
 
@@ -98,12 +99,14 @@ async def get_episode_url(platform_url_list: List[str]) -> Dict[str, List[str]]:
         ]
         if len(results) == 0:
             continue
-        # 合并所有结果而不是只取第一个
-        for result in results:
-            for k, v in result.items():
-                if k not in url_dict.keys():
-                    url_dict[str(k)] = []
-                url_dict[str(k)].append(v)
+        else:
+            for result in results:
+                for k, v in result.items():
+                    if k not in url_dict.keys():
+                        url_dict[str(k)] = []
+                    url_dict[str(k)].append(v)
+            # 如果找到链接就不需要找下一个
+            break
     return url_dict
 
 
@@ -147,11 +150,14 @@ async def get_platform_urls_by_title(
 
 
 async def get_danmu_by_url(url: str) -> List[List[Any]]:
-    danmu_data = await get_all_danmu(url)
-    # 按时间排序
-    danmu_data.sort(key=lambda x: x[0])
-    # 去重复
-    danmu_data = deduplicate_danmu(danmu_data)
+    try:
+        danmu_data = await get_danmu_from_hls(url)
+    except Exception:
+        danmu_data = await get_all_danmu(url)
+        # 按时间排序
+        danmu_data.sort(key=lambda x: x[0])
+        # 去重复
+        danmu_data = deduplicate_danmu(danmu_data)
     return danmu_data
 
 
@@ -164,13 +170,16 @@ async def get_danmu_by_id(id: str, episode_number: str) -> List[List[Any]]:
         url = urls[episode_number]
     else:
         url = urls[list(urls.keys())[0]]
-    for single_url in url:
-        danmu_data = await get_all_danmu(single_url)
-        all_danmu.extend(danmu_data)
-    # 按时间排序
-    all_danmu.sort(key=lambda x: x[0])
-    # 去重复
-    all_danmu = deduplicate_danmu(all_danmu)
+    single_url = url[0] if url else None
+    if single_url:
+        try:
+            all_danmu = await get_danmu_from_hls(single_url)
+        except Exception:
+            all_danmu = await get_all_danmu(single_url)
+            # 按时间排序
+            all_danmu.sort(key=lambda x: x[0])
+            # 去重复
+            all_danmu = deduplicate_danmu(all_danmu)
     return all_danmu
 
 
@@ -185,13 +194,16 @@ async def get_danmu_by_title(
         url = urls[episode_number]
     else:
         url = urls[list(urls.keys())[0]]
-    for single_url in url:
-        danmu_data = await get_all_danmu(single_url)
-        all_danmu.extend(danmu_data)
-    # 按时间排序
-    all_danmu.sort(key=lambda x: x[0])
-    # 去重复
-    all_danmu = deduplicate_danmu(all_danmu)
+    single_url = url[0] if url else None
+    if single_url:
+        try:
+            all_danmu = await get_danmu_from_hls(single_url)
+        except Exception:
+            all_danmu = await get_all_danmu(single_url)
+            # 按时间排序
+            all_danmu.sort(key=lambda x: x[0])
+            # 去重复
+            all_danmu = deduplicate_danmu(all_danmu)
     return all_danmu
 
 
@@ -211,7 +223,13 @@ async def get_danmu_by_title_caiji(title: str, episode_number: int) -> List[List
 
     if episode_number in url_dict:
         url = url_dict[episode_number]
-    all_danmu = await get_all_danmu(url)
-    # 去重复
-    all_danmu = deduplicate_danmu(all_danmu)
+    if url:
+        try:
+            all_danmu = await get_danmu_from_hls(url)
+        except Exception:
+            all_danmu = await get_all_danmu(url)
+            # 按时间排序
+            all_danmu.sort(key=lambda x: x[0])
+            # 去重复
+            all_danmu = deduplicate_danmu(all_danmu)
     return all_danmu

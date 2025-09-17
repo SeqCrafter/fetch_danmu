@@ -3,6 +3,8 @@ from curl_cffi import requests
 import re
 import hashlib
 import brotlicffi as brotli
+from ..utils import resolve_url_query
+from jsonpath_ng import parse as jsonpath_parse
 
 # import .iqiyidm_pb2 as Iqiyidm_pb2
 from . import iqiyidm_pb2 as Iqiyidm_pb2
@@ -103,9 +105,6 @@ async def get_iqiyi_danmu(url: str) -> list[dict]:
 
 
 async def get_iqiyi_episode_url(url: str) -> dict[str, str]:
-    from lib.utils import resolve_url_query
-    from jsonpath_ng import parse
-
     if "iqiyi.com" in url:
         async with requests.AsyncSession() as client:
             try:
@@ -117,18 +116,19 @@ async def get_iqiyi_episode_url(url: str) -> dict[str, str]:
                         url, headers=base_headers, impersonate="chrome124"
                     )
                     js_url_matches = re.findall(
-                        r'<script src="(.*?)" referrerpolicy="no-referrer-when-downgrade">',
+                        r'"[^"]*accelerator\.js[^"]*"',
                         res.text,
                     )
                     if not js_url_matches:
                         return {}
                     js_url = js_url_matches[0]
+                    js_url = "https:" + js_url.replace('"', "")
                     res = await client.get(
-                        f"https:{js_url}",
+                        js_url,
                         headers={"referer": url},
                         impersonate="chrome124",
                     )
-                    tv_id_matches = re.findall('"tvId":([0-9]+)', res.text)
+                    tv_id_matches = re.findall(r'"tvId":(\d+)', res.text)
                     if not tv_id_matches:
                         return {}
                     tv_id = tv_id_matches[0]
@@ -137,7 +137,7 @@ async def get_iqiyi_episode_url(url: str) -> dict[str, str]:
                 res = await client.get(
                     url, headers={"referer": url}, impersonate="chrome124"
                 )
-                jsonpath_expr = parse("$..bk_title")
+                jsonpath_expr = jsonpath_parse("$..bk_title")
                 matches = [match for match in jsonpath_expr.find(res.json())]
                 result_objs = [
                     match.context.value for match in matches if match.value == "选集"
