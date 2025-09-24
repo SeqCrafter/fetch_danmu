@@ -37,7 +37,6 @@ class IndexState(rx.State):
         else:
             yield rx.window_alert(f"搜索 {movie_title} 失败")
         self.loading = False
-        yield
 
     @rx.event
     async def handle_key_events(self, event) -> None:

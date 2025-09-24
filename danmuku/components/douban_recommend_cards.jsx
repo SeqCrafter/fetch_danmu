@@ -16,7 +16,7 @@ const DoubanRecommendCards = ({ doubanData, onCardClick }) => {
 
   // 如果没有数据，返回空
   if (!doubanData || !doubanData.movies || doubanData.movies.length === 0) {
-    return null;
+    return <div>加载豆瓣数据中……</div>;
   }
 
   const movies = doubanData.movies;

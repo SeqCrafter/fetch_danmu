@@ -19,14 +19,16 @@ class PreviewState(rx.State):
     @rx.event
     def get_code(self) -> None:
         self.code = f"curl {self.current_host}/api/douban_id?douban_id={self.douban_id}&episode_number={self.episode_number}"
-        self.show_code = True
+        self.show_code = not self.show_code
 
     @rx.event
     def unmount_clean(self) -> None:
         self.reset()
 
     @rx.event
-    async def load_json_data(self) -> None:
+    def load_json_data(self) -> None:
+        self.loading = True
+        yield
         args = self.router.url.query_parameters
         url = args.get("url", "")
         url = unquote_plus(url)
@@ -46,7 +48,6 @@ class PreviewState(rx.State):
         self.current_host = current_host
         self.danmaku_url = f"{self.current_host}/api/douban_id?douban_id={self.douban_id}&episode_number={self.episode_number}"
         self.loading = False
-        yield
 
 
 def code_block(code: str, language: str):
