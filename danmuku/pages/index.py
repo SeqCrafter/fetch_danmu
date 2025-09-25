@@ -22,8 +22,8 @@ class IndexState(rx.State):
         self.loading = False
 
     @rx.event
-    async def get_douban_data(self) -> None:
-        self.douban_data = await douban_get_recommend_data()
+    def get_douban_data(self) -> None:
+        self.douban_data = douban_get_recommend_data()
 
     @rx.event
     async def handle_card_click(self, movie_title: str) -> None:

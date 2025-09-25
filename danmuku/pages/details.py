@@ -10,17 +10,14 @@ class DetailsState(rx.State):
     loading: bool = True
 
     @rx.event
-    async def load_json_data(self) -> None:
-        self.loading = True
-        yield
+    def load_json_data(self) -> None:
         args = self.router.url.query_parameters
         vod_id = args.get("vod_id", "")
         if vod_id:
-            self.vod_details = await get_vod_details(int(vod_id))
+            self.vod_details = get_vod_details(int(vod_id))
             self.loading = False
-            yield
         else:
-            yield rx.redirect("/")
+            return rx.redirect("/")
 
     @rx.event
     def unmount_clean(self) -> None:

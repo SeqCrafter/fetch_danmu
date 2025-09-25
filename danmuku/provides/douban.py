@@ -182,14 +182,14 @@ def get_latest_douban_hotlist_url():
     return latest_url, yesterday_url
 
 
-async def douban_get_recommend_data() -> dict:
+def douban_get_recommend_data() -> dict:
     latest_url, yesterday_url = get_latest_douban_hotlist_url()
-    async with requests.AsyncSession() as client:
-        res = await client.get(latest_url)
+    with requests.Session() as client:
+        res = client.get(latest_url)
         if res.status_code == 200:
             return res.json()
         else:
-            res = await client.get(yesterday_url)
+            res = client.get(yesterday_url)
             if res.status_code == 200:
                 return res.json()
             else:

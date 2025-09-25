@@ -27,8 +27,6 @@ class PreviewState(rx.State):
 
     @rx.event
     def load_json_data(self) -> None:
-        self.loading = True
-        yield
         args = self.router.url.query_parameters
         url = args.get("url", "")
         url = unquote_plus(url)

@@ -45,15 +45,15 @@ def correct_episode_str(episode_str: str) -> int:
         return -1
 
 
-async def get_vod_details(vod_id: int) -> Optional[dict[str, str]]:
+def get_vod_details(vod_id: int) -> Optional[dict[str, str]]:
     params = {
         "ac": "detail",
         "ids": vod_id,
     }
     vod_details = {}
     vod_links = {}
-    async with requests.AsyncSession() as client:
-        res = await client.get(API_URL, params=params, impersonate="chrome124")
+    with requests.Session() as client:
+        res = client.get(API_URL, params=params, impersonate="chrome124")
         if res.status_code != 200 or not res.json()["list"]:
             return None
         metainfo = res.json()["list"][0]

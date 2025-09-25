@@ -166,7 +166,7 @@ const ArtPlayerWithDanmaku = ({
       airplay: true,
       theme: "#22c55e",
       lang: "zh-cn",
-      hotkey: false,
+      hotkey: true,
       fastForward: true,
       autoOrientation: true,
       lock: true,
