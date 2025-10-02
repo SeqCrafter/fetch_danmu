@@ -1,0 +1,9 @@
+brotlicffi
+cn2an
+curl_cffi
+parsel
+protobuf
+fastapi
+pydantic
+granian
+jsonpath-ng
