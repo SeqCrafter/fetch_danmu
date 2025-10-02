@@ -7,3 +7,7 @@ fastapi
 pydantic
 granian
 jsonpath-ng
+tortoise-orm
+uvloop
+aerich
+asyncpg

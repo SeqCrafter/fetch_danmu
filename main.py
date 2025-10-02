@@ -9,6 +9,21 @@ from functions import (
     get_danmu_by_title,
     get_danmu_by_title_caiji,
 )
+from tortoise.contrib.fastapi import register_tortoise
+
+try:
+    from settings import TORTOISE_ORM
+except ImportError as e:
+    if "No module named 'app'" in str(e):
+        import sys
+        from pathlib import Path
+
+        _workdir = Path(__file__).parent.parent.as_posix()
+        if _workdir not in sys.path:
+            sys.path.append(_workdir)
+        from settings import TORTOISE_ORM
+    else:
+        raise e
 
 
 class DanmukuResponse(BaseModel):
@@ -30,6 +45,7 @@ app = FastAPI(
     },
 )
 
+register_tortoise(app, config=TORTOISE_ORM)
 # 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,
