@@ -37,6 +37,7 @@ DB_password = os.getenv("POSTGRES_PASSWORD", "postgres")
 DB_link = os.getenv("POSTGRES_LINK", "localhost:5432/postgres")
 DB_url = f"postgres://{DB_username}:{DB_password}@{DB_link}"
 
+print(DB_url)
 
 register_tortoise(
     app,
