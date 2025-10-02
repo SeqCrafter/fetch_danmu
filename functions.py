@@ -17,6 +17,7 @@ from provides.hls import get_danmu_from_hls
 from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta, timezone
 from models import Video, PlayLink
+from tortoise.functions import Count
 
 
 def deduplicate_danmu(danmu_list: List[List[Any]]) -> List[List[Any]]:
@@ -319,3 +320,9 @@ async def get_danmu_by_title_caiji(title: str, episode_number: int) -> List[List
             # 去重复
             all_danmu = deduplicate_danmu(all_danmu)
     return all_danmu
+
+
+async def check_database_access() -> int:
+    ## get video from database
+    video_number = await Video.all().count()
+    return video_number

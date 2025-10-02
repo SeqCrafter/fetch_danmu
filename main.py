@@ -8,6 +8,7 @@ from functions import (
     get_danmu_by_id,
     get_danmu_by_title,
     get_danmu_by_title_caiji,
+    check_database_access,
 )
 from tortoise.contrib.fastapi import register_tortoise
 import os
@@ -127,6 +128,15 @@ async def danmu_by_title_caiji(
         "name": title,
         "danmu": len(all_danmu),
         "danmuku": all_danmu,
+    }
+
+
+@app.get("/api/check")
+async def check():
+    video_number = await check_database_access()
+    return {
+        "douban_id_number": video_number,
+        "success": True,
     }
 
 
