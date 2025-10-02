@@ -22,7 +22,9 @@
 5. run command: `granian --interface asgi --host 0.0.0.0 --port 8080 --workers 4 main:app`
 6. environment variables: `POSTGRES_USER` and `POSTGRES_PASSWORD` 设置为你的数据库用户名和密码，`POSTGRES_LINK` 设置为你的数据库链接
 
-**你可以使用 supabase 来创建数据库，并设置环境变量。也可以使用其他数据库，并设置环境变量。**
+> 整个数据库的链接是 postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_LINK}
+
+**你可以使用 [supabase](https://supabase.com/) 来创建数据库，并设置环境变量。也可以使用其他数据库，并设置环境变量。supbase 的链接为:postgresql://[YOUR-USERNAME]:[YOUR-PASSWORD]@[POSTGRES_LINK]**
 
 服务将在 提供的链接 启动。
 
