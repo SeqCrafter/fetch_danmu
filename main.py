@@ -10,20 +10,7 @@ from functions import (
     get_danmu_by_title_caiji,
 )
 from tortoise.contrib.fastapi import register_tortoise
-
-try:
-    from settings import TORTOISE_ORM
-except ImportError as e:
-    if "No module named 'app'" in str(e):
-        import sys
-        from pathlib import Path
-
-        _workdir = Path(__file__).parent.parent.as_posix()
-        if _workdir not in sys.path:
-            sys.path.append(_workdir)
-        from settings import TORTOISE_ORM
-    else:
-        raise e
+import os
 
 
 class DanmukuResponse(BaseModel):
@@ -45,7 +32,19 @@ app = FastAPI(
     },
 )
 
-register_tortoise(app, config=TORTOISE_ORM)
+DB_username = os.getenv("POSTGRES_USER", "postgres")
+DB_password = os.getenv("POSTGRES_PASSWORD", "postgres")
+DB_link = os.getenv("POSTGRES_LINK", "localhost:5432/postgres")
+DB_url = f"postgres://{DB_username}:{DB_password}@{DB_link}"
+
+
+register_tortoise(
+    app,
+    db_url=DB_url,
+    modules={"models": ["models"]},
+    generate_schemas=True,
+)
+
 # 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,

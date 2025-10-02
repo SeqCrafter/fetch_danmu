@@ -1,12 +1,6 @@
 # 弹幕获取 API (Danmu Fetch API)
 
-鉴于 Robyn 远强于 Fastapi，所以重新用 Robyn 实现接口服务
-
-![](https://private-user-images.githubusercontent.com/29942790/291895825-4a2bba61-24e7-4ee2-8884-19b40204bfcd.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTY1ODA2MTMsIm5iZiI6MTc1NjU4MDMxMywicGF0aCI6Ii8yOTk0Mjc5MC8yOTE4OTU4MjUtNGEyYmJhNjEtMjRlNy00ZWUyLTg4ODQtMTliNDAyMDRiZmNkLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA4MzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwODMwVDE4NTgzM1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTFhNWRkZmEyODU2YjYyOTBkMGEyMGRjMDEyYzBjODZlN2NhN2E3ZDRlZjc4N2FkYmU0ZmJkNDYxNzgwNzhmNWUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.qijSGRsTdKf0YOWmC5j51s3TZRqkEzn2M68VMwEO-AM)
-
----
-
-一个基于 [Robyn](https://github.com/sparckles/Robyn) 的异步弹幕聚合服务，支持从多个主流视频平台获取弹幕数据，具体支持的平台请看`provides`文件目录，返回用于[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的弹幕数据。
+一个基于 fastapi 的异步弹幕聚合服务，支持从多个主流视频平台获取弹幕数据，具体支持的平台请看`provides`文件目录，返回用于[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的弹幕数据。
 
 ## 功能特性
 
@@ -19,17 +13,22 @@
 
 ## 快速开始
 
-### Docker 运行
+### 在[leapcell](https://leapcell.io)上部署
 
-```bash
-docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:1.1.2
-```
+1. fork 本仓库
+2. 在[leapcell](https://leapcell.io)上创建一个新项目,使用 fork 后的仓库
+3. 部署 fastapi 应用
+4. build command: `pip install -r requirements.txt`
+5. run command: `granian --interface asgi --host 0.0.0.0 --port 8080 --workers 4 main:app`
+6. environment variables: `POSTGRES_USER` and `POSTGRES_PASSWORD` 设置为你的数据库用户名和密码，`POSTGRES_LINK` 设置为你的数据库链接
 
-服务将在 `http://127.0.0.1:8080` 启动。
+**你可以使用 supabase 来创建数据库，并设置环境变量。也可以使用其他数据库，并设置环境变量。**
+
+服务将在 提供的链接 启动。
 
 ### API 文档
 
-启动服务后，可通过以下地址访问 API 文档：
+启动服务后，可通过以下地址(我们用 localhost 作为示例)访问 API 文档页面：
 
 - Swagger UI: `http://localhost:8080/docs`
 

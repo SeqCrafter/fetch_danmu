@@ -9,5 +9,5 @@ granian
 jsonpath-ng
 tortoise-orm
 uvloop
-aerich
 asyncpg
+email-validator
