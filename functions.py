@@ -141,7 +141,7 @@ async def get_or_update_urls_from_db(
     if not video:
         need_update = True
     else:
-        # 检查更新时间是否超过1天
+        # 检查更新时间是否超过6小时
         # 使用 timezone-aware datetime 进行比较
         now = datetime.now(timezone.utc)
         # 确保 updated_at 也是 timezone-aware
@@ -152,7 +152,7 @@ async def get_or_update_urls_from_db(
             updated_at = video.updated_at
 
         time_diff = now - updated_at
-        if time_diff > timedelta(days=1):
+        if time_diff > timedelta(hours=6):
             need_update = True
 
     if need_update:
