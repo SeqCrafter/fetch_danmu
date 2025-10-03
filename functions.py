@@ -17,7 +17,6 @@ from provides.hls import get_danmu_from_hls
 from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta, timezone
 from models import Video, PlayLink
-from tortoise.functions import Count
 
 
 def deduplicate_danmu(danmu_list: List[List[Any]]) -> List[List[Any]]:
