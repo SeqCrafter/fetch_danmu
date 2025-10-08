@@ -11,3 +11,4 @@ tortoise-orm
 uvloop
 asyncpg
 email-validator
+orjson

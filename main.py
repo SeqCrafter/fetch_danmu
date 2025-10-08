@@ -12,6 +12,7 @@ from functions import (
 )
 from tortoise.contrib.fastapi import register_tortoise
 import os
+from fastapi.responses import ORJSONResponse
 
 
 class DanmukuResponse(BaseModel):
@@ -31,6 +32,7 @@ app = FastAPI(
         "url": "https://github.com/SeqCrafter/fetch_danmu",
         "email": "sdupan2015@gmail.com",
     },
+    default_response_class=ORJSONResponse,
 )
 
 DB_username = os.getenv("POSTGRES_USER", "postgres")
@@ -38,7 +40,6 @@ DB_password = os.getenv("POSTGRES_PASSWORD", "postgres")
 DB_link = os.getenv("POSTGRES_LINK", "localhost:5432/postgres")
 DB_url = f"postgres://{DB_username}:{DB_password}@{DB_link}"
 
-print(DB_url)
 
 register_tortoise(
     app,
