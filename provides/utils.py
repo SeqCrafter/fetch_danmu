@@ -17,7 +17,9 @@ def other2http(platform_url_list: List[str]):
             query = resolve_url_query(url)
             match agreement:
                 case ["txvideo"]:
-                    url = f"https://v.qq.com/x/cover/{query.get('cid')[0]}/{query.get('vid')[0]}.html"
+                    if "cid" in query and "vid" in query:
+                        if query.get("cid") and query.get("vid"):
+                            url = f"https://v.qq.com/x/cover/{query.get('cid')[0]}/{query.get('vid')[0]}.html"
                 case ["iqiyi"]:
                     url = f"http://www.iqiyi.com?tvid={query.get('tvid')[0]}"
                 case ["youku"]:

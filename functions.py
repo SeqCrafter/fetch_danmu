@@ -14,7 +14,7 @@ from provides.douban import (
 import asyncio
 from provides.caiji import get_vod_links_from_name
 from provides.hls import get_danmu_from_hls
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, cast
 from datetime import datetime, timedelta, timezone
 from models import Video, PlayLink
 
@@ -96,13 +96,15 @@ async def get_episode_url(platform_url_list: List[str]) -> Dict[str, List[str]]:
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         ## 过滤掉空字典并合并
-        results = [
-            result for result in results if result and not isinstance(result, Exception)
+        filtered_results: List[Dict[str, str]] = [
+            cast(Dict[str, str], result)
+            for result in results
+            if result and not isinstance(result, Exception)
         ]
-        if len(results) == 0:
+        if len(filtered_results) == 0:
             continue
         else:
-            for result in results:
+            for result in filtered_results:
                 for k, v in result.items():
                     if k not in url_dict.keys():
                         url_dict[str(k)] = []
@@ -309,15 +311,15 @@ async def get_danmu_by_title_caiji(title: str, episode_number: int) -> List[List
 
     if episode_number in url_dict:
         url = url_dict[episode_number]
-    if url:
-        try:
-            all_danmu = await get_danmu_from_hls(url)
-        except Exception:
-            all_danmu = await get_all_danmu(url)
-            # 按时间排序
-            all_danmu.sort(key=lambda x: x[0])
-            # 去重复
-            all_danmu = deduplicate_danmu(all_danmu)
+        if url:
+            try:
+                all_danmu = await get_danmu_from_hls(url)
+            except Exception:
+                all_danmu = await get_all_danmu(url)
+                # 按时间排序
+                all_danmu.sort(key=lambda x: x[0])
+                # 去重复
+                all_danmu = deduplicate_danmu(all_danmu)
     return all_danmu
 
 

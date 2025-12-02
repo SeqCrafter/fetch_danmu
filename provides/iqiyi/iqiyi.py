@@ -23,7 +23,7 @@ def get_md5(str: str) -> str:
     return md5.hexdigest()
 
 
-async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
+async def get_link(url, client: requests.AsyncSession) -> List[str]:
     url_list = []
     res = await client.get(url, headers=base_headers, impersonate="chrome124")
     js_url = re.findall(
@@ -82,9 +82,7 @@ async def fetch_single_barrage(client: requests.AsyncSession, url: str) -> list[
         return []
 
 
-async def read_barrage(
-    urls: List[str], client: requests.AsyncSession = None
-) -> List[dict]:
+async def read_barrage(urls: List[str], client: requests.AsyncSession) -> List[dict]:
     barrage_list = []
     tasks = [fetch_single_barrage(client, url) for url in urls]
     results = await asyncio.gather(*tasks, return_exceptions=True)

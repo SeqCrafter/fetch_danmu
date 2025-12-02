@@ -146,7 +146,7 @@ if __name__ == "__main__":
     from granian.constants import Interfaces
 
     granian_app = Granian(
-        target=app,
+        target="main:app",
         factory=True,
         address="0.0.0.0",
         port=8080,

@@ -120,7 +120,7 @@ def encWbi(params: dict, img_key: str, sub_key: str) -> Dict[str, Any]:
     return params
 
 
-async def get_link(url: str, client: requests.AsyncSession = None) -> List[str]:
+async def get_link(url: str, client: requests.AsyncSession = None) -> List[str] | None:
     api_epid_cid = "https://api.bilibili.com/pgc/view/web/season"
     img_key, sub_key = await getWbiKeys()
     if url.find("bangumi/") != -1 and url.find("ep") != -1:

@@ -12,7 +12,7 @@ class Video(Model):
     # 反向关系类型提示，用于访问关联的播放链接
     playlinks: fields.ReverseRelation["PlayLink"]
 
-    class Meta:
+    class Meta:  # type: ignore
         table = "video"
         table_description = "视频信息表"
 
@@ -35,7 +35,7 @@ class PlayLink(Model):
         description="关联的视频",
     )
 
-    class Meta:
+    class Meta:  # type: ignore
         table = "playlink"
         table_description = "播放链接表"
         # 确保同一个视频的集数不重复

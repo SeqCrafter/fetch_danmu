@@ -71,9 +71,11 @@ async def get_souhu_episode_url(url: str) -> dict[str, str]:
             play_list_id = play_list_id_matches[0]
             params = {"playlistid": play_list_id, "vid": vid}
             res = await client.get(
-                "https://pl.hd.sohu.com/videolist", params, impersonate="chrome124"
+                "https://pl.hd.sohu.com/videolist",
+                params=params,
+                impersonate="chrome124",
             )
-            res.encoding = res.charset_encoding
+            res.encoding = res.charset_encoding or "utf-8"
             res_data = json.loads(res.text.encode("utf-8"))
             url_dict = {}
             for item in res_data.get("videos", []):

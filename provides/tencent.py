@@ -7,7 +7,7 @@ import asyncio
 import json
 
 
-async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
+async def get_link(url, client: requests.AsyncSession) -> List[str]:
     api_danmaku_base = "https://dm.video.qq.com/barrage/base/"
     api_danmaku_segment = "https://dm.video.qq.com/barrage/segment/"
     res = await client.get(url)
@@ -23,16 +23,18 @@ async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
     if not vid:
         print("parse vid failed, check url")
         return []
-    res = await client.get(urljoin(api_danmaku_base, vid))
-    if res.status_code != 200:
-        print("fetch barrage failed")
-        return []
-    segment_indices = list(res.json().get("segment_index", {}).values())
-    links = [
-        urljoin(api_danmaku_segment, vid + "/" + item.get("segment_name", "/"))
-        for item in segment_indices
-    ]
-    return links
+    if isinstance(vid, str):
+        res = await client.get(urljoin(api_danmaku_base, vid))
+        if res.status_code != 200:
+            print("fetch barrage failed")
+            return []
+        segment_indices = list(res.json().get("segment_index", {}).values())
+        links = [
+            urljoin(api_danmaku_segment, vid + "/" + item.get("segment_name", "/"))
+            for item in segment_indices
+        ]
+        return links
+    return []
 
 
 def parse_data(data: dict) -> List[dict]:
@@ -63,9 +65,7 @@ async def fetch_single_barrage(client: requests.AsyncSession, url: str) -> List[
         return []
 
 
-async def read_barrage(
-    urls: List[str], client: requests.AsyncSession = None
-) -> List[dict]:
+async def read_barrage(urls: List[str], client: requests.AsyncSession) -> List[dict]:
     """异步并发获取所有URL的弹幕数据"""
     barrage_list = []
 

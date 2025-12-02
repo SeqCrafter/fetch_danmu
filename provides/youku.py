@@ -31,9 +31,11 @@ async def get_tk_enc(client: requests.AsyncSession) -> bool:
 
 async def create_client() -> requests.AsyncSession:
     client = requests.AsyncSession()
-    client.headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-    }
+    client.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+        }
+    )
     await get_cna(client)
     await get_tk_enc(client)
     return client
@@ -210,9 +212,11 @@ async def get_youku_danmu(url: str) -> list[dict]:
     danmu_list = []
     if "youku.com" in url:
         async with requests.AsyncSession() as client:
-            client.headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-            }
+            client.headers.update(
+                {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+                }
+            )
             await get_cna(client)
             await get_tk_enc(client)
             urls = await get_vid_list(client, url)
