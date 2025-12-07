@@ -15,7 +15,6 @@ import asyncio
 from provides.caiji import get_vod_links_from_name
 from provides.hls import get_danmu_from_hls
 from typing import List, Dict, Optional, Any, cast
-from datetime import datetime, timedelta, timezone
 from models import Video, PlayLink
 
 
@@ -125,8 +124,8 @@ async def get_platform_urls_by_id(douban_id: str) -> Dict[str, List[str]]:
 
 
 async def get_or_update_urls_from_db(
-    douban_id: str, video_name: Optional[str] = None
-) -> Dict[str, List[str]]:
+    douban_id: str, episode_number: str, video_name: Optional[str] = None
+) -> Dict[str, List[str]] | None:
     """
     Args:
         douban_id: 豆瓣ID
@@ -136,26 +135,23 @@ async def get_or_update_urls_from_db(
         Dict[str, List[str]]: 集数和播放链接的字典
     """
     # 查询数据库中是否存在该douban_id的视频
-    video = await Video.filter(douban_id=douban_id).first()
-
-    # 判断是否需要更新
     need_update = False
-    if not video:
-        need_update = True
-    else:
-        # 检查更新时间是否超过6小时
-        # 使用 timezone-aware datetime 进行比较
-        now = datetime.now(timezone.utc)
-        # 确保 updated_at 也是 timezone-aware
-        if video.updated_at.tzinfo is None:
-            # 如果是 naive datetime，假设是 UTC
-            updated_at = video.updated_at.replace(tzinfo=timezone.utc)
-        else:
-            updated_at = video.updated_at
-
-        time_diff = now - updated_at
-        if time_diff > timedelta(hours=6):
+    video = await Video.filter(douban_id=douban_id).first()
+    if video:
+        # 检查指定集数是否存在，如果不存在，也需要update
+        await video.fetch_related("playlinks")
+        urls = {}
+        for playlink in video.playlinks:
+            episode_str = playlink.episode
+            if episode_str not in urls:
+                urls[episode_str] = []
+            urls[episode_str].append(playlink.link)
+        if episode_number not in urls:
             need_update = True
+        else:
+            return urls
+    else:
+        need_update = True
 
     if need_update:
         # 重新从网络获取urls
@@ -186,16 +182,6 @@ async def get_or_update_urls_from_db(
                     # 如果集数不能转换为整数，跳过
                     continue
 
-        return urls
-    else:
-        # 从数据库读取播放链接
-        await video.fetch_related("playlinks")
-        urls = {}
-        for playlink in video.playlinks:
-            episode_str = playlink.episode
-            if episode_str not in urls:
-                urls[episode_str] = []
-            urls[episode_str].append(playlink.link)
         return urls
 
 
@@ -251,7 +237,7 @@ async def get_danmu_by_id(id: str, episode_number: str) -> List[List[Any]]:
     """
     all_danmu = []
     # 使用数据库缓存机制获取urls
-    urls = await get_or_update_urls_from_db(id)
+    urls = await get_or_update_urls_from_db(id, episode_number)
     if not urls:
         return all_danmu
     if episode_number in urls:
