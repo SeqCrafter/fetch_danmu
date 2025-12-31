@@ -13,7 +13,7 @@ from provides.douban import (
 )
 import asyncio
 from provides.caiji import get_vod_links_from_name
-from provides.hls import get_danmu_from_hls
+from provides.hls import get_danmu_combined
 from typing import List, Dict, Optional, Any, cast
 from models import Video, PlayLink
 
@@ -215,12 +215,15 @@ async def get_platform_urls_by_title(
 
 async def get_danmu_by_url(url: str) -> List[List[Any]]:
     try:
-        danmu_data = await get_danmu_from_hls(url)
+        danmu_data = await get_danmu_combined(url)
+        if not danmu_data:
+            raise Exception("No danmu from external sources")
     except Exception:
         danmu_data = await get_all_danmu(url)
-        # 按时间排序
+
+    # Sort and deduplicate if we have data
+    if danmu_data:
         danmu_data.sort(key=lambda x: x[0])
-        # 去重复
         danmu_data = deduplicate_danmu(danmu_data)
     return danmu_data
 
@@ -247,11 +250,13 @@ async def get_danmu_by_id(id: str, episode_number: str) -> List[List[Any]]:
     print("single_url", single_url)
     if single_url:
         try:
-            all_danmu = await get_danmu_from_hls(single_url)
-            print("get_danmu_from_hls", all_danmu[0])
+            all_danmu = await get_danmu_combined(single_url)
+            if not all_danmu:
+                raise Exception("No danmu from external sources")
         except Exception:
             all_danmu = await get_all_danmu(single_url)
-            print("get_all_danmu", all_danmu[0])
+
+        if all_danmu:
             # 按时间排序
             all_danmu.sort(key=lambda x: x[0])
             # 去重复
@@ -273,9 +278,13 @@ async def get_danmu_by_title(
     single_url = url[0] if url else None
     if single_url:
         try:
-            all_danmu = await get_danmu_from_hls(single_url)
+            all_danmu = await get_danmu_combined(single_url)
+            if not all_danmu:
+                raise Exception("No danmu from external sources")
         except Exception:
             all_danmu = await get_all_danmu(single_url)
+
+        if all_danmu:
             # 按时间排序
             all_danmu.sort(key=lambda x: x[0])
             # 去重复
@@ -301,9 +310,13 @@ async def get_danmu_by_title_caiji(title: str, episode_number: int) -> List[List
         url = url_dict[episode_number]
         if url:
             try:
-                all_danmu = await get_danmu_from_hls(url)
+                all_danmu = await get_danmu_combined(url)
+                if not all_danmu:
+                    raise Exception("No danmu from external sources")
             except Exception:
                 all_danmu = await get_all_danmu(url)
+
+            if all_danmu:
                 # 按时间排序
                 all_danmu.sort(key=lambda x: x[0])
                 # 去重复
