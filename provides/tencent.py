@@ -101,7 +101,11 @@ async def get_tencent_episode_url(url: str) -> dict[str, str]:
                 vid = re.search(r"/([a-zA-Z0-9]+)\.html", url)
                 if vid:
                     vid = vid.group(1)
-            cid = re.findall('"cid":"(.*?)"', res.text)[0]
+            cid_match = re.findall('"cid":"(.*?)"', res.text)
+            if not cid_match:
+                print("解析cid失败, 请检查链接是否正确")
+                return {}
+            cid = cid_match[0]
             if not vid:
                 print("解析vid失败, 请检查链接是否正确")
                 return {}
