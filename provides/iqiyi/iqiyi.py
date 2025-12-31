@@ -165,8 +165,8 @@ async def get_iqiyi_episode_url(url: str) -> dict[str, str]:
 
 
 if __name__ == "__main__":
-    url = "https://www.iqiyi.com/v_26ecr2p42o0.html?vfm=m_331_dbdy&fv=4904d94982104144a1548dd9040df241&amp;subtype=9&amp;type=online-video&amp;link2key=52541a56ed"
+    url = "https://www.iqiyi.com/v_lz3vp8ybho.html"
     # asyncio.run(get_iqiyi_danmu(url))
-    # res = asyncio.run(get_iqiyi_danmu(url))
-    res = asyncio.run(get_iqiyi_episode_url(url))
+    res = asyncio.run(get_iqiyi_danmu(url))
+    # res = asyncio.run(get_iqiyi_episode_url(url))
     print(res)

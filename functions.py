@@ -152,7 +152,6 @@ async def get_or_update_urls_from_db(
             return urls
     else:
         need_update = True
-
     if need_update:
         # 重新从网络获取urls
         urls = await get_platform_urls_by_id(douban_id)
@@ -245,11 +244,14 @@ async def get_danmu_by_id(id: str, episode_number: str) -> List[List[Any]]:
     else:
         url = urls[list(urls.keys())[0]]
     single_url = url[0] if url else None
+    print("single_url", single_url)
     if single_url:
         try:
             all_danmu = await get_danmu_from_hls(single_url)
+            print("get_danmu_from_hls", all_danmu[0])
         except Exception:
             all_danmu = await get_all_danmu(single_url)
+            print("get_all_danmu", all_danmu[0])
             # 按时间排序
             all_danmu.sort(key=lambda x: x[0])
             # 去重复

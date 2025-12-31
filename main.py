@@ -35,6 +35,7 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 
+
 DB_username = os.getenv("POSTGRES_USER", "postgres")
 DB_password = os.getenv("POSTGRES_PASSWORD", "postgres")
 DB_link = os.getenv("POSTGRES_LINK", "localhost:5432/postgres")

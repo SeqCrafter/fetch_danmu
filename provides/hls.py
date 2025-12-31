@@ -5,7 +5,7 @@ from typing import List, Any
 
 
 async def get_danmu_from_hls(url: str) -> List[List[Any]]:
-    danmuku_url = f"https://dmku.hls.one/?ac=dm&url={url}"
+    danmuku_url = f"https://api.danmu.icu/?ac=dm&url={url}"
     async with requests.AsyncSession() as client:
         res = await client.get(danmuku_url, impersonate="chrome124")
         if res.status_code != 200:
