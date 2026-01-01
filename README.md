@@ -19,7 +19,7 @@
 2. 在[leapcell](https://leapcell.io)上创建一个新项目,使用 fork 后的仓库
 3. 部署 fastapi 应用
 4. build command: `pip install -r requirements.txt`
-5. run command: `granian --interface asgi --host 0.0.0.0 --port 8080 --workers 4 main:app`
+5. run command: `uvicorn main:app --host 0.0.0.0 --port 8080`
 6. environment variables: `POSTGRES_USER` and `POSTGRES_PASSWORD` 设置为你的数据库用户名和密码，`POSTGRES_LINK` 设置为你的数据库链接
 
 > 整个数据库的链接是 postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_LINK}
