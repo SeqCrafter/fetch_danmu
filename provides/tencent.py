@@ -89,67 +89,65 @@ async def get_tencent_danmu(url: str) -> list[dict]:
 
 
 async def get_tencent_episode_url(url: str) -> dict[str, str]:
-    if "v.qq.com" in url:
-        async with requests.AsyncSession() as client:
-            res = await client.get(url)
-            sel = parsel.Selector(res.text)
-            title = sel.xpath("//title/text()").get().split("_")[0]
-            vid = re.findall(f'"title":"{title}","vid":"(.*?)"', res.text)
+    url_dict = {}
+    async with requests.AsyncSession() as client:
+        res = await client.get(url)
+        sel = parsel.Selector(res.text)
+        title = sel.xpath("//title/text()").get().split("_")[0]
+        vid = re.findall(f'"title":"{title}","vid":"(.*?)"', res.text)
+        if vid:
+            vid = vid[-1]
+        if not vid:
+            vid = re.search(r"/([a-zA-Z0-9]+)\.html", url)
             if vid:
-                vid = vid[-1]
-            if not vid:
-                vid = re.search(r"/([a-zA-Z0-9]+)\.html", url)
-                if vid:
-                    vid = vid.group(1)
-            cid_match = re.findall('"cid":"(.*?)"', res.text)
-            if not cid_match:
-                print("解析cid失败, 请检查链接是否正确")
-                return {}
-            cid = cid_match[0]
-            if not vid:
-                print("解析vid失败, 请检查链接是否正确")
-                return {}
+                vid = vid.group(1)
+        cid_match = re.findall('"cid":"(.*?)"', res.text)
+        if not cid_match:
+            print("解析cid失败, 请检查链接是否正确")
+            return {}
+        cid = cid_match[0]
+        if not vid:
+            print("解析vid失败, 请检查链接是否正确")
+            return {}
+        url = "https://pbaccess.video.qq.com/trpc.universal_backend_service.page_server_rpc.PageServer/GetPageData"
+        data = {
+            "page_params": {
+                "req_from": "web_vsite",
+                "page_id": "vsite_episode_list",
+                "page_type": "detail_operation",
+                "id_type": "1",
+                "page_size": "",
+                "cid": cid,
+                "vid": vid,
+                "lid": "",
+                "page_num": "",
+                "page_context": "episode_begin=1&episode_end=100&episode_step=1&page_num=0&page_size=100",
+                "detail_page_type": "1",
+            },
+            "has_cache": 1,
+        }
+        res = await client.post(
+            url,
+            json=data,
+            headers={
+                "referer": "https://v.qq.com/",
+                "Cookie": "video_platform=2; vversion_name=8.2.95",
+            },
+        )
+        json_data = res.json().get("data", {})
+        data_list = (
+            json_data.get("module_list_datas", [{}])[0]
+            .get("module_datas", [{}])[0]
+            .get("item_data_lists", {})
+            .get("item_datas", [])
+        )
 
-            url = "https://pbaccess.video.qq.com/trpc.universal_backend_service.page_server_rpc.PageServer/GetPageData"
-            data = {
-                "page_params": {
-                    "req_from": "web_vsite",
-                    "page_id": "vsite_episode_list",
-                    "page_type": "detail_operation",
-                    "id_type": "1",
-                    "page_size": "",
-                    "cid": cid,
-                    "vid": vid,
-                    "lid": "",
-                    "page_num": "",
-                    "page_context": "episode_begin=1&episode_end=100&episode_step=1&page_num=0&page_size=100",
-                    "detail_page_type": "1",
-                },
-                "has_cache": 1,
-            }
-            res = await client.post(
-                url,
-                json=data,
-                headers={
-                    "referer": "https://v.qq.com/",
-                    "Cookie": "video_platform=2; vversion_name=8.2.95",
-                },
+        for item in data_list:
+            item_params = item.get("item_params")
+            url_dict[f"{item_params.get('title')}"] = (
+                f"https://v.qq.com/x/cover/{item_params.get('cid')}/{item_params.get('vid')}.html"
             )
-            json_data = res.json().get("data", {})
-            data_list = (
-                json_data.get("module_list_datas", [{}])[0]
-                .get("module_datas", [{}])[0]
-                .get("item_data_lists", {})
-                .get("item_datas", [])
-            )
-            url_dict = {}
-            for item in data_list:
-                item_params = item.get("item_params")
-                url_dict[f"{item_params.get('title')}"] = (
-                    f"https://v.qq.com/x/cover/{item_params.get('cid')}/{item_params.get('vid')}.html"
-                )
-            return url_dict
-    return {}
+        return url_dict
 
 
 if __name__ == "__main__":

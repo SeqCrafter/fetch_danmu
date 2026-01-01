@@ -46,7 +46,6 @@ def deduplicate_danmu(danmu_list: List[List[Any]]) -> List[List[Any]]:
 
 ### url是官方视频播放链接
 async def get_all_danmu(url: str) -> List[List[Any]]:
-    all_danmu = []
     """使用异步并行执行所有平台获取弹幕"""
     if "mgtv.com" in url:
         results = await get_mgtv_danmu(url)
@@ -63,7 +62,7 @@ async def get_all_danmu(url: str) -> List[List[Any]]:
     else:
         results = []
     if not results:
-        return all_danmu
+        return []
 
     all_danmu = [
         [
@@ -84,29 +83,25 @@ async def get_episode_url(platform_url_list: List[str]) -> Dict[str, List[str]]:
     """获取所有剧集链接"""
     url_dict = {}
     for platform_url in platform_url_list:
-        tasks = [
-            get_bilibili_episode_url(platform_url),
-            get_iqiyi_episode_url(platform_url),
-            get_souhu_episode_url(platform_url),
-            get_tencent_episode_url(platform_url),
-            get_youku_episode_url(platform_url),
-            get_mgtv_episode_url(platform_url),
-        ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        ## 过滤掉空字典并合并
-        filtered_results: List[Dict[str, str]] = [
-            cast(Dict[str, str], result)
-            for result in results
-            if result and not isinstance(result, Exception)
-        ]
-        if len(filtered_results) == 0:
-            continue
+        if "mgtv" in platform_url:
+            results = await get_mgtv_episode_url(platform_url)
+        elif "qq" in platform_url:
+            results = await get_tencent_episode_url(platform_url)
+        elif "youku" in platform_url:
+            results = await get_youku_episode_url(platform_url)
+        elif "iqiyi" in platform_url:
+            results = await get_iqiyi_episode_url(platform_url)
+        elif "bilibili" in platform_url:
+            results = await get_bilibili_episode_url(platform_url)
+        elif "sohu" in platform_url:
+            results = await get_souhu_episode_url(platform_url)
         else:
-            for result in filtered_results:
-                for k, v in result.items():
-                    if k not in url_dict.keys():
-                        url_dict[str(k)] = []
-                    url_dict[str(k)].append(v)
+            results = {}
+        if results:
+            for k, v in results.items():
+                if k not in url_dict.keys():
+                    url_dict[str(k)] = []
+                url_dict[str(k)].append(v)
             # 如果找到链接就不需要找下一个
             break
     return url_dict
@@ -232,11 +227,10 @@ async def get_danmu_by_id(id: str, episode_number: str) -> List[List[Any]]:
     Returns:
         List[List[Any]]: 弹幕列表
     """
-    all_danmu = []
     # 使用数据库缓存机制获取urls
     urls = await get_or_update_urls_from_db(id, episode_number)
     if not urls:
-        return all_danmu
+        return []
     if episode_number in urls:
         url = urls[episode_number]
     else:
@@ -250,16 +244,19 @@ async def get_danmu_by_id(id: str, episode_number: str) -> List[List[Any]]:
             all_danmu.sort(key=lambda x: x[0])
             # 去重复
             all_danmu = deduplicate_danmu(all_danmu)
-    return all_danmu
+            return all_danmu
+        else:
+            return []
+    else:
+        return []
 
 
 async def get_danmu_by_title(
     title: str, season_number: Optional[str], season: bool, episode_number: str
 ) -> List[List[Any]]:
-    all_danmu = []
     urls = await get_platform_urls_by_title(title, season_number, season)
     if not urls:
-        return all_danmu
+        return []
     if episode_number in urls:
         url = urls[episode_number]
     else:
@@ -272,14 +269,17 @@ async def get_danmu_by_title(
             all_danmu.sort(key=lambda x: x[0])
             # 去重复
             all_danmu = deduplicate_danmu(all_danmu)
-    return all_danmu
+            return all_danmu
+        else:
+            return []
+    else:
+        return []
 
 
 async def get_danmu_by_title_caiji(title: str, episode_number: int) -> List[List[Any]]:
-    all_danmu = []
     urls = await get_vod_links_from_name(title)
     if not urls:
-        return all_danmu
+        return []
     ## 如果有多个来源，只要第一个
     url_dict = {}
     for _, urls in urls.items():
@@ -287,7 +287,7 @@ async def get_danmu_by_title_caiji(title: str, episode_number: int) -> List[List
             url_dict = urls
             break
     if not url_dict:
-        return all_danmu
+        return []
 
     if episode_number in url_dict:
         url = url_dict[episode_number]
@@ -298,7 +298,13 @@ async def get_danmu_by_title_caiji(title: str, episode_number: int) -> List[List
                 all_danmu.sort(key=lambda x: x[0])
                 # 去重复
                 all_danmu = deduplicate_danmu(all_danmu)
-    return all_danmu
+                return all_danmu
+            else:
+                return []
+        else:
+            return []
+    else:
+        return []
 
 
 async def check_database_access() -> int:

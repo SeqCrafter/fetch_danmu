@@ -58,30 +58,29 @@ async def get_souhu_danmu(url: str) -> list[dict]:
 
 
 async def get_souhu_episode_url(url: str) -> dict[str, str]:
-    if "tv.sohu.com" in url:
-        async with requests.AsyncSession() as client:
-            _res = await client.get(url, impersonate="chrome124")
-            vid_matches = re.findall('vid="(.*?)";', _res.text)
-            if not vid_matches:
-                return {}
-            vid = vid_matches[0]
-            play_list_id_matches = re.findall('playlistId="(.*?)";', _res.text)
-            if not play_list_id_matches:
-                return {}
-            play_list_id = play_list_id_matches[0]
-            params = {"playlistid": play_list_id, "vid": vid}
-            res = await client.get(
-                "https://pl.hd.sohu.com/videolist",
-                params=params,
-                impersonate="chrome124",
-            )
-            res.encoding = res.charset_encoding or "utf-8"
-            res_data = json.loads(res.text.encode("utf-8"))
-            url_dict = {}
-            for item in res_data.get("videos", []):
-                url_dict[item.get("order")] = item.get("pageUrl")
-            return url_dict
-    return {}
+    url_dict = {}
+    async with requests.AsyncSession() as client:
+        _res = await client.get(url, impersonate="chrome124")
+        vid_matches = re.findall('vid="(.*?)";', _res.text)
+        if not vid_matches:
+            return {}
+        vid = vid_matches[0]
+        play_list_id_matches = re.findall('playlistId="(.*?)";', _res.text)
+        if not play_list_id_matches:
+            return {}
+        play_list_id = play_list_id_matches[0]
+        params = {"playlistid": play_list_id, "vid": vid}
+        res = await client.get(
+            "https://pl.hd.sohu.com/videolist",
+            params=params,
+            impersonate="chrome124",
+        )
+        res.encoding = res.charset_encoding or "utf-8"
+        res_data = json.loads(res.text.encode("utf-8"))
+
+        for item in res_data.get("videos", []):
+            url_dict[item.get("order")] = item.get("pageUrl")
+        return url_dict
 
 
 if __name__ == "__main__":

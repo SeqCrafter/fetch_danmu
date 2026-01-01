@@ -216,22 +216,21 @@ async def get_bilibili_danmu(url: str) -> List[Dict[str, Any]]:
 
 async def get_bilibili_episode_url(url: str) -> Dict[str, str]:
     url_dict = {}
-    if "bilibili.com" in url:
-        api_epid_cid = "https://api.bilibili.com/pgc/view/web/season"
-        async with requests.AsyncSession() as client:
-            if url.find("bangumi/") != -1 and url.find("ep") != -1:
-                epid_matches = re.findall(r"ep(\d+)", url)
-                if not epid_matches:
-                    return url_dict
-                epid = epid_matches[0]
-                params = {"ep_id": epid}
-                res = await client.get(
-                    url=api_epid_cid, params=params, impersonate="chrome110"
-                )
-                res_json = res.json()
-                for item in res_json.get("result", {}).get("episodes", []):
-                    if item.get("section_type") == 0:
-                        url_dict[str(item.get("title"))] = item.get("share_url")
+    api_epid_cid = "https://api.bilibili.com/pgc/view/web/season"
+    async with requests.AsyncSession() as client:
+        if url.find("bangumi/") != -1 and url.find("ep") != -1:
+            epid_matches = re.findall(r"ep(\d+)", url)
+            if not epid_matches:
+                return {}
+            epid = epid_matches[0]
+            params = {"ep_id": epid}
+            res = await client.get(
+                url=api_epid_cid, params=params, impersonate="chrome110"
+            )
+            res_json = res.json()
+            for item in res_json.get("result", {}).get("episodes", []):
+                if item.get("section_type") == 0:
+                    url_dict[str(item.get("title"))] = item.get("share_url")
     return url_dict
 
 

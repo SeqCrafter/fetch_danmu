@@ -47,8 +47,6 @@ def parse_data(data: dict) -> list[dict]:
         parsed_data["position"] = "right"
         parsed_data["color"] = "#FFFFFF"
         parsed_data["size"] = "25px"
-        # parsed_data["border"] = False
-        # parsed_data["style"] = {}
         barrage_list.append(parsed_data)
     return barrage_list
 
@@ -80,23 +78,21 @@ async def get_mgtv_danmu(url: str) -> list[dict]:
 async def get_mgtv_episode_url(
     url: str, url_dict: Optional[dict] = None, page: int = 1
 ) -> dict[str, str]:
-    if "mgtv.com" not in url:
-        if url_dict is None:
-            url_dict = {}
-        video_id = url.split(".")[-2].split("/")[-1]
-        _data_url = f"https://pcweb.api.mgtv.com/episode/list?version=5.5.35&video_id={video_id}&page={page}&size=50"
-        async with requests.AsyncSession() as session:
-            res = await session.get(_data_url, impersonate="chrome124")
-            for item in res.json().get("data", {}).get("list", []):
-                if item.get("t1") not in url_dict.keys():
-                    url_dict[item.get("t1")] = "https://www.mgtv.com" + item.get("url")
-            if len(url_dict.keys()) < res.json().get("data", {}).get(
-                "total", len(url_dict.keys())
-            ):
-                page += 1
-                return await get_mgtv_episode_url(url, url_dict, page)
-            return url_dict
-    return {}
+    if url_dict is None:
+        url_dict = {}
+    video_id = url.split(".")[-2].split("/")[-1]
+    _data_url = f"https://pcweb.api.mgtv.com/episode/list?version=5.5.35&video_id={video_id}&page={page}&size=50"
+    async with requests.AsyncSession() as session:
+        res = await session.get(_data_url, impersonate="chrome124")
+        for item in res.json().get("data", {}).get("list", []):
+            if item.get("t1") not in url_dict.keys():
+                url_dict[item.get("t1")] = "https://www.mgtv.com" + item.get("url")
+        if len(url_dict.keys()) < res.json().get("data", {}).get(
+            "total", len(url_dict.keys())
+        ):
+            page += 1
+            return await get_mgtv_episode_url(url, url_dict, page)
+    return url_dict
 
 
 if __name__ == "__main__":

@@ -104,64 +104,59 @@ async def get_iqiyi_danmu(url: str) -> list[dict]:
 
 
 async def get_iqiyi_episode_url(url: str) -> dict[str, str]:
-    if "iqiyi.com" in url:
-        async with requests.AsyncSession() as client:
-            try:
-                query = resolve_url_query(url)
-                if query.get("tvid"):
-                    tv_id = query.get("tvid")[0]
-                else:
-                    res = await client.get(
-                        url, headers=base_headers, impersonate="chrome124"
-                    )
-                    js_url_matches = re.findall(
-                        r'"[^"]*accelerator\.js[^"]*"',
-                        res.text,
-                    )
-                    if not js_url_matches:
-                        return {}
-                    js_url = js_url_matches[0]
-                    js_url = "https:" + js_url.replace('"', "")
-                    res = await client.get(
-                        js_url,
-                        headers={"referer": url},
-                        impersonate="chrome124",
-                    )
-                    tv_id_matches = re.findall(r'"tvId":(\d+)', res.text)
-                    if not tv_id_matches:
-                        return {}
-                    tv_id = tv_id_matches[0]
-                params = f"entity_id={tv_id}&src=pca_tvg&timestamp={int(time.time())}&secret_key=howcuteitis"
-                url = f"https://mesh.if.iqiyi.com/tvg/v2/lw/base_info?{params}&sign={get_md5(params).upper()}"
+    url_dict = {}
+    async with requests.AsyncSession() as client:
+        try:
+            query = resolve_url_query(url)
+            if query.get("tvid"):
+                tv_id = query.get("tvid")[0]
+            else:
                 res = await client.get(
-                    url, headers={"referer": url}, impersonate="chrome124"
+                    url, headers=base_headers, impersonate="chrome124"
                 )
-                jsonpath_expr = jsonpath_parse("$..bk_title")
-                matches = [match for match in jsonpath_expr.find(res.json())]
-                result_objs = [
-                    match.context.value for match in matches if match.value == "选集"
-                ]
-                url_dict = {}
-                for result_obj in result_objs:
-                    d = (
-                        result_obj.get("data", {})
-                        .get("data", [{}])[0]
-                        .get("videos", {})
-                    )
-                    if isinstance(d, str):
-                        _res = await client.get(d)
-                        d = _res.json().get("data", {}).get("videos", {})
-                    d = d.get("feature_paged", {})
-                    for k in list(d.keys()):
-                        for item in d[k]:
-                            if item.get("page_url"):
-                                url_dict[f"{item.get('album_order')}"] = item.get(
-                                    "page_url"
-                                )
-                return url_dict
-            except Exception:
-                return {}
-    return {}
+                js_url_matches = re.findall(
+                    r'"[^"]*accelerator\.js[^"]*"',
+                    res.text,
+                )
+                if not js_url_matches:
+                    return {}
+                js_url = js_url_matches[0]
+                js_url = "https:" + js_url.replace('"', "")
+                res = await client.get(
+                    js_url,
+                    headers={"referer": url},
+                    impersonate="chrome124",
+                )
+                tv_id_matches = re.findall(r'"tvId":(\d+)', res.text)
+                if not tv_id_matches:
+                    return {}
+                tv_id = tv_id_matches[0]
+            params = f"entity_id={tv_id}&src=pca_tvg&timestamp={int(time.time())}&secret_key=howcuteitis"
+            url = f"https://mesh.if.iqiyi.com/tvg/v2/lw/base_info?{params}&sign={get_md5(params).upper()}"
+            res = await client.get(
+                url, headers={"referer": url}, impersonate="chrome124"
+            )
+            jsonpath_expr = jsonpath_parse("$..bk_title")
+            matches = [match for match in jsonpath_expr.find(res.json())]
+            result_objs = [
+                match.context.value for match in matches if match.value == "选集"
+            ]
+            for result_obj in result_objs:
+                d = result_obj.get("data", {}).get("data", [{}])[0].get("videos", {})
+                if isinstance(d, str):
+                    _res = await client.get(d)
+                    d = _res.json().get("data", {}).get("videos", {})
+                d = d.get("feature_paged", {})
+                for k in list(d.keys()):
+                    for item in d[k]:
+                        if item.get("page_url"):
+                            url_dict[f"{item.get('album_order')}"] = item.get(
+                                "page_url"
+                            )
+            return url_dict
+        except Exception as e:
+            print(f"获取剧集链接失败 {url}: {e}")
+            return {}
 
 
 if __name__ == "__main__":
