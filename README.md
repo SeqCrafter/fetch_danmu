@@ -1,5 +1,11 @@
 # 弹幕获取 API (Danmu Fetch API)
 
+因为 Reflex 的 API 更新频繁，所以基于 reflex 的前端版本删除了，只保留了后端 API 的仓库。最近测试发现，本地可以获取正确的弹幕，但是部署到远端就得到随机的错误弹幕，原因不明。
+
+推荐 Fork 修改的另一个仓库[danmu_api](https://github.com/SeqCrafter/danmu_api), 具有相似的 API.
+
+---
+
 一个基于 fastapi 的异步弹幕聚合服务，支持从多个主流视频平台获取弹幕数据，具体支持的平台请看`provides`文件目录，返回用于[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的弹幕数据。
 
 ## 功能特性
