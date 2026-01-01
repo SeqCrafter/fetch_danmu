@@ -11,9 +11,8 @@ from provides.douban import (
     select_by_360,
     douban_select,
 )
-import asyncio
 from provides.caiji import get_vod_links_from_name
-from typing import List, Dict, Optional, Any, cast
+from typing import List, Dict, Optional, Any
 from models import Video, PlayLink
 
 
@@ -46,20 +45,28 @@ def deduplicate_danmu(danmu_list: List[List[Any]]) -> List[List[Any]]:
 
 ### url是官方视频播放链接
 async def get_all_danmu(url: str) -> List[List[Any]]:
+    print("begin to get danmu from url", url)
     """使用异步并行执行所有平台获取弹幕"""
-    if "mgtv.com" in url:
+    if "mgtv" in url:
         results = await get_mgtv_danmu(url)
-    elif "v.qq.com" in url:
+        print("get danmu from mgtv")
+    elif "qq" in url:
         results = await get_tencent_danmu(url)
-    elif "youku.com" in url:
+        print("get danmu from qq")
+    elif "youku" in url:
         results = await get_youku_danmu(url)
-    elif "iqiyi.com" in url:
+        print("get danmu from youku")
+    elif "iqiyi" in url:
         results = await get_iqiyi_danmu(url)
-    elif "bilibili.com" in url:
+        print("get danmu from iqiyi")
+    elif "bilibili" in url:
         results = await get_bilibili_danmu(url)
-    elif "tv.sohu.com" in url:
+        print("get danmu from bilibili")
+    elif "sohu" in url:
         results = await get_souhu_danmu(url)
+        print("get danmu from sohu")
     else:
+        print("no danmu data get from source")
         results = []
     if not results:
         return []
@@ -74,6 +81,7 @@ async def get_all_danmu(url: str) -> List[List[Any]]:
         ]
         for item in results
     ]
+    print("top 5 danmu", all_danmu[:5])
     return all_danmu
 
 
@@ -213,8 +221,10 @@ async def get_danmu_by_url(url: str) -> List[List[Any]]:
     if danmu_data:
         danmu_data.sort(key=lambda x: x[0])
         danmu_data = deduplicate_danmu(danmu_data)
+        print("top 5 danmu after deduplicate", danmu_data[:5])
         return danmu_data
     else:
+        print("no danmu data")
         return []
 
 
@@ -244,10 +254,12 @@ async def get_danmu_by_id(id: str, episode_number: str) -> List[List[Any]]:
             all_danmu.sort(key=lambda x: x[0])
             # 去重复
             all_danmu = deduplicate_danmu(all_danmu)
+            print("top 5 danmu after deduplicate", all_danmu[:5])
             return all_danmu
         else:
             return []
     else:
+        print("no url")
         return []
 
 

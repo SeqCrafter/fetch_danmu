@@ -35,12 +35,13 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 
-
+"""
 DB_username = os.getenv("POSTGRES_USER", "postgres")
 DB_password = os.getenv("POSTGRES_PASSWORD", "postgres")
 DB_link = os.getenv("POSTGRES_LINK", "localhost:5432/postgres")
 DB_url = f"postgres://{DB_username}:{DB_password}@{DB_link}"
-
+"""
+DB_url = "postgres://avnadmin:AVNS_LJyZ1q8Cws6gSFUdAf5@danmuku-sdupan2015-81e3.j.aivencloud.com:16732/defaultdb"
 
 register_tortoise(
     app,
