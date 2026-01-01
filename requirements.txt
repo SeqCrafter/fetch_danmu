@@ -5,7 +5,7 @@ parsel
 protobuf
 fastapi
 pydantic
-granian
+uvicorn
 jsonpath-ng
 tortoise-orm
 uvloop
