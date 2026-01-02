@@ -30,14 +30,17 @@ async def get_link(url, client: requests.AsyncSession) -> List[str]:
         r'<script src="(.*?)" referrerpolicy="no-referrer-when-downgrade">',
         res.text,
     )
+    print("line 33: js_url is ", js_url)
     if len(js_url) == 0:
         js_url = "//mesh.if.iqiyi.com/player/lw/lwplay/accelerator.js?apiVer=3"
     else:
         js_url = js_url[0]
+    print("line 38: js_url is ", js_url)
     res = await client.get(
         f"https:{js_url}", headers={"referer": url}, impersonate="chrome124"
     )
     tv_id = re.findall('"tvId":([0-9]+)', res.text)[0]
+    print("line 43: tv_id is ", tv_id)
     video_duration = int(re.findall('"videoDuration":([0-9]+)', res.text)[0])
     step_length = 60
     max_index = int(video_duration / step_length) + 1
@@ -48,6 +51,7 @@ async def get_link(url, client: requests.AsyncSession) -> List[str]:
         url_list.append(
             f"https://cmts.iqiyi.com/bullet/{tv_id[-4:-2]}/{tv_id[-2:]}/{o}"
         )
+    print("line 54: url_list is ", url_list)
     return url_list
 
 
