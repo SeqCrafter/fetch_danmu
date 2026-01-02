@@ -6,8 +6,8 @@ import time
 from hashlib import md5
 from functools import reduce
 import asyncio
-import provides.bilibili.bilibilidm_pb2 as Danmaku
-from provides.utils import int_to_hex_color
+from . import bilibilidm_pb2 as Danmaku
+from ..utils import int_to_hex_color
 from typing import Dict, Any
 # import bilibilidm_pb2 as Danmaku
 

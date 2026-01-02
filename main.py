@@ -3,15 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Annotated, List, Any
 from urllib.parse import unquote_plus
-from functions import (
-    get_danmu_by_url,
-    get_danmu_by_id,
-    get_danmu_by_title,
-    get_danmu_by_title_caiji,
-    check_database_access,
-)
-from tortoise.contrib.fastapi import register_tortoise
-import os
+from .functions.functions import get_danmu_by_url, get_danmu_by_id, get_danmu_by_title
 from fastapi.responses import ORJSONResponse
 
 
@@ -34,21 +26,6 @@ app = FastAPI(
     },
     default_response_class=ORJSONResponse,
 )
-
-
-DB_username = os.getenv("POSTGRES_USER", "postgres")
-DB_password = os.getenv("POSTGRES_PASSWORD", "postgres")
-DB_link = os.getenv("POSTGRES_LINK", "localhost:5432/postgres")
-DB_url = f"postgres://{DB_username}:{DB_password}@{DB_link}"
-
-
-register_tortoise(
-    app,
-    db_url=DB_url,
-    modules={"models": ["models"]},
-    generate_schemas=True,
-)
-
 # 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,
@@ -107,51 +84,3 @@ async def danmu_by_title(
         "danmu": len(all_danmu),
         "danmuku": all_danmu,
     }
-
-
-@app.get("/api/test/title", response_model=DanmukuResponse)
-async def danmu_by_title_caiji(
-    title: Annotated[str, Query(description="视频名称")],
-    season: Annotated[bool, Query(description="是否为连续剧, true/false")],
-    episode_number: Annotated[int, Query(description="集数")],
-    season_number: Annotated[str | None, Query(description="季数")] = None,
-):
-    """通过视频名称直接获取弹幕（测试版本）"""
-
-    if season:
-        all_danmu = await get_danmu_by_title_caiji(title, episode_number)
-    else:
-        all_danmu = await get_danmu_by_title_caiji(title, 1)
-    ## to avoid type error
-    print(season_number)
-
-    return {
-        "code": 0,
-        "name": title,
-        "danmu": len(all_danmu),
-        "danmuku": all_danmu,
-    }
-
-
-@app.get("/api/check")
-async def check():
-    video_number = await check_database_access()
-    return {
-        "douban_id_number": video_number,
-        "success": True,
-    }
-
-
-if __name__ == "__main__":
-    from granian.server import Server as Granian
-    from granian.constants import Interfaces
-
-    granian_app = Granian(
-        target="main:app",
-        factory=True,
-        address="0.0.0.0",
-        port=8080,
-        interface=Interfaces.ASGI,
-    )
-
-    granian_app.serve()

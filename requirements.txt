@@ -3,12 +3,11 @@ cn2an
 curl_cffi
 parsel
 protobuf
-fastapi
+fastapi[standard]
 pydantic
-uvicorn
 jsonpath-ng
-tortoise-orm
 uvloop
 asyncpg
 email-validator
 orjson
+async-lru
