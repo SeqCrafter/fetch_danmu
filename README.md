@@ -1,6 +1,6 @@
 # 弹幕获取 API (Danmu Fetch API)
 
-因为 Reflex 的 API 更新频繁，所以基于 reflex 的前端版本删除了，只保留了后端 API 的仓库。最近测试发现，本地可以获取正确的弹幕，但是部署到远端就得到随机的错误弹幕，原因不明。
+因为 Reflex 的 API 更新频繁，所以基于 reflex 的前端版本删除了，只保留了后端 API 的仓库。最近测试发现，本地可以获取正确的弹幕，但是部署到远端就得到随机的错误弹幕，原因是当前对爱奇艺的抓取方法在有些服务器(国外 ip)上会获取错误的 tvId!从而导致抓取到错误弹幕。
 
 推荐 Fork 修改的另一个仓库[danmu_api](https://github.com/SeqCrafter/danmu_api), 具有相似的 API.
 
@@ -19,20 +19,21 @@
 
 ## 快速开始
 
-### 在[leapcell](https://leapcell.io)上部署
+### 在[leapcell](https://leapcell.io)上部署(爱奇艺的抓取是错误结果)
 
 1. fork 本仓库
 2. 在[leapcell](https://leapcell.io)上创建一个新项目,使用 fork 后的仓库
 3. 部署 fastapi 应用
 4. build command: `pip install -r requirements.txt`
-5. run command: `uvicorn main:app --host 0.0.0.0 --port 8080`
-6. environment variables: `POSTGRES_USER` and `POSTGRES_PASSWORD` 设置为你的数据库用户名和密码，`POSTGRES_LINK` 设置为你的数据库链接
+5. run command: `fastapi run main.py --port 8080`
 
-> 整个数据库的链接是 postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_LINK}
+### 使用 Docker 部署
 
-**你可以使用 [supabase](https://supabase.com/) 来创建数据库，并设置环境变量。也可以使用其他数据库，并设置环境变量。supbase 的链接为:postgresql://[YOUR-USERNAME]:[YOUR-PASSWORD]@[POSTGRES_LINK]**
+```bash
+docker run -d --name fetch_danmu --restart unless-stopped -p 8080:8080 ghcr.io/seqcrafter/fetch_danmu:latest
+```
 
-服务将在 提供的链接 启动。
+服务将在 8080 端口启动。
 
 ### API 文档
 

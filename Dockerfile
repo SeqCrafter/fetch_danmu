@@ -1,5 +1,5 @@
 # Multi-stage build for slim image
-FROM python:3.13-slim as builder
+FROM python:3.14-slim as builder
 
 # Set working directory
 WORKDIR /app
@@ -16,7 +16,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Final stage
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 # Set working directory
 WORKDIR /app
@@ -38,5 +38,5 @@ ENV PATH=/root/.local/bin:$PATH
 # Expose port
 EXPOSE 8080
 
-# Run the application with Granian
-CMD ["granian", "--interface", "asgi", "--host", "0.0.0.0", "--port", "8080", "--workers", "2", "main:app"]
+
+CMD ["fastapi", "run", "main.py", "--port", "8080"]
