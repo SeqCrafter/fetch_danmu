@@ -1,0 +1,64 @@
+name: ci
+
+on: workflow_dispatch
+
+permissions:
+  contents: write
+  packages: write
+  actions: write
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate version tags
+        id: meta
+        run: |
+          # 获取时间戳
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          # 获取分支名（清理特殊字符）
+          BRANCH=$(echo ${{ github.ref_name }} | sed 's/[^a-zA-Z0-9._-]/-/g')
+
+          # 生成多个标签
+          TAGS="ghcr.io/seqcrafter/fetch_danmu:latest"
+          TAGS="${TAGS},ghcr.io/seqcrafter/fetch_danmu:${BRANCH}-${TIMESTAMP}"
+
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "Generated tags: ${TAGS}"
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            PORT=8888
+            DB_URL=${{ secrets.DB_URL }}
+            ASYNC_DB_URL=${{ secrets.ASYNC_DB_URL }}
+
+  cleanup-refresh:
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 2
