@@ -1,13 +1,3 @@
-brotlicffi
-cn2an
-curl_cffi
-parsel
-protobuf
 fastapi[standard]
-pydantic
-jsonpath-ng
-uvloop
-asyncpg
-email-validator
-orjson
-async-lru
+aiohttp
+async_lru

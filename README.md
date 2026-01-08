@@ -1,5 +1,11 @@
 # 弹幕获取 API (Danmu Fetch API)
 
+因为弹幕服务一般部署在国外服务器上，因此对项目重构，目前只负责从豆瓣网抓取链接，然后直接调用弹幕接口返回弹幕
+
+目前调用的弹幕接口为：[公益弹幕库](https://dmku.hls.one/)
+
+---
+
 因为 Reflex 的 API 更新频繁，所以基于 reflex 的前端版本删除了，只保留了后端 API 的仓库。最近测试发现，本地可以获取正确的弹幕，但是部署到远端就得到随机的错误弹幕，原因是当前对爱奇艺的抓取方法在有些服务器(国外 ip)上会获取错误的 tvId!从而导致抓取到错误弹幕。
 
 推荐 Fork 修改的另一个仓库[danmu_api](https://github.com/SeqCrafter/danmu_api), 具有相似的 API.
@@ -46,7 +52,7 @@ docker run -d --name fetch_danmu --restart unless-stopped -p 8080:8080 ghcr.io/s
 ### 1. 通过豆瓣 ID 获取弹幕
 
 ```
-GET /douban_id
+GET /douban
 ```
 
 **参数:**
@@ -58,42 +64,7 @@ GET /douban_id
 
 ```bash
 ## 子夜归第一集弹幕
-curl "http://127.0.0.1:8080/douban_id?douban_id=36481469&episode_number=1"
-```
-
-### 2. 通过标题搜索获取弹幕
-
-```
-GET /title
-```
-
-**参数:**
-
-- `title` (必需): 视频标题
-- `season_number` (可选): 季数，默认为 1
-- `season` (可选): 是否是连续剧，默认为 True，电视剧选 True，电影选 False
-- `episode_number` (可选): 集数
-
-**示例:**
-
-```bash
-curl "http://127.0.0.1:8080/title?title=子夜归&season_number=1&episode_number=1&season=true"
-```
-
-### 3. 通过 URL 直接获取弹幕
-
-```
-GET /url
-```
-
-**参数:**
-
-- `url` (必需): 视频页面 URL
-
-**示例:**
-
-```bash
-curl "http://127.0.0.1:8080/url?url=https://v.qq.com/x/cover/mzc002009y0nzq8/z4101m43ng6.html"
+curl "http://127.0.0.1:8080/douban?douban_id=36481469&episode_number=1"
 ```
 
 ## 响应格式
@@ -115,18 +86,12 @@ curl "http://127.0.0.1:8080/url?url=https://v.qq.com/x/cover/mzc002009y0nzq8/z41
 ### 错误响应
 
 ```json
-{ "error": "douban_id is required" }
+{"error": "douban_id is required"}
 ```
 
 ## 许可证
 
 本项目基于 MIT 许可证开源。详见 [LICENSE](LICENSE) 文件。
-
-## 贡献
-
-所有弹幕获取和豆瓣搜索的代码都是从[thshu/fnos-tv](https://github.com/thshu/fnos-tv)仓库中 1:1 复制的，感谢作者的贡献。
-本仓库由于使用了 fastapi, 所以将原本所有的同步代码全部修改为异步类型。
-同时本仓库将弹幕接口解耦，并适配了[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的格式。
 
 ## 注意事项
 
