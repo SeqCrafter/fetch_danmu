@@ -579,6 +579,18 @@ async def get_final_animes(douban_id: str, video_type: str):
     return final_animes
 
 
+def is_valid_video_name(title: str) -> bool:
+    if (
+        "解说" in title
+        or "预告" in title
+        or "花絮" in title
+        or "动态漫" in title
+        or "之精彩" in title
+    ):
+        return False
+    return True
+
+
 @alru_cache(maxsize=32, ttl=7200)
 async def get_final_animes_by_title(title: str, video_type: str) -> Anime | None:
     # 创建实例
@@ -588,7 +600,17 @@ async def get_final_animes_by_title(title: str, video_type: str) -> Anime | None
     # 存储最终匹配的采集源anime列表
     if source.animes_from_caiji:
         for caiji_anime in source.animes_from_caiji:
-            if type_map.get(caiji_anime.types) == video_type:
+            if not is_valid_video_name(caiji_anime.title):
+                continue
+            if (
+                type_map.get(caiji_anime.types) == video_type
+                and caiji_anime.title == title
+            ):
+                return caiji_anime
+            ## 如果title不能完全匹配，尝试部分匹配
+            if type_map.get(caiji_anime.types) == video_type and (
+                title in caiji_anime.title or caiji_anime.title in title
+            ):
                 return caiji_anime
     else:
         return None
