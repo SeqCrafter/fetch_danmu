@@ -34,9 +34,36 @@ class Anime:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Anime):
             return False
-        link1 = {ep.url for ep in self.episodes if ep.url}
-        link2 = {ep.url for ep in other.episodes if ep.url}
+        link1 = {self._process_url(ep.url) for ep in self.episodes if ep.url}
+        link2 = {self._process_url(ep.url) for ep in other.episodes if ep.url}
         return len(link1 & link2) > 0
+
+    def _process_url(self, url: str) -> str:
+        if "iqiyi" in url:
+            content = re.findall(r"v_[^.]+(?=\.html)", url)
+            if content:
+                return content[0]
+            else:
+                return url
+        if "youku" in url:
+            content = re.findall(r"id_[^.]+(?=\.html)", url)
+            if content:
+                return content[0]
+            else:
+                return url
+        if "bilibili" in url:
+            content = re.findall(r"(?<=bangumi/play/)[^?\s]+", url)
+            if content:
+                return content[0]
+            else:
+                return url
+        if "qq" in url:
+            content = re.findall(r"(?<=cover/)[^/]+(?=/)", url)
+            if content:
+                return content[0]
+            else:
+                return url
+        return url
 
 
 source_map = {
@@ -209,6 +236,8 @@ class DoubanSource:
         url = vendor.get("url", "").split("?")[0]
         if not url:
             return None
+        if url.startswith("http://"):
+            url = url.replace("http://", "https://")
 
         return Anime(
             title=self.title,
@@ -626,10 +655,10 @@ async def get_danmuku(url: str) -> DanmukuResponse:
                 danmuku_data = await response.json()
                 return DanmukuResponse(**danmuku_data)
             else:
-                print(f"Failed to fetch danmuku: {response.status}")
+                print(f"dmku return no data: {response.status}")
                 return DanmukuResponse(
                     code=1,
-                    name="Failed to fetch danmuku",
+                    name="Failed to fetch danmuku from dmku.hls.one",
                     danum=0,
                     danmuku=[],
                 )
@@ -729,7 +758,7 @@ async def danmu_by_douban_id(
     video_type: Annotated[VideoType, Query(description="视频类型")] = VideoType.tv,
 ):
     all_danmu = await get_danmu_by_douban_id(
-        str(douban_id), video_type, str(episode_number)
+        str(douban_id), video_type.value, str(episode_number)
     )
     return all_danmu
 
@@ -740,5 +769,5 @@ async def danmu_by_title(
     episode_number: Annotated[int, Query(description="集数")],
     video_type: Annotated[VideoType, Query(description="视频类型")] = VideoType.tv,
 ):
-    all_danmu = await get_danmu_by_title(title, video_type, str(episode_number))
+    all_danmu = await get_danmu_by_title(title, video_type.value, str(episode_number))
     return all_danmu
