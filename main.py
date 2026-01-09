@@ -66,12 +66,17 @@ class Anime:
         return url
 
 
-source_map = {
-    "腾讯视频": "qq",
-    "爱奇艺": "qiyi",
-    "优酷": "youku",
-    "哔哩哔哩": "bilibili",
-}
+def get_eng_source(source: str) -> str:
+    if "腾讯" in source:
+        return "qq"
+    elif "爱奇艺" in source:
+        return "qiyi"
+    elif "优酷" in source:
+        return "youku"
+    elif "哔哩哔哩" in source:
+        return "bilibili"
+    return source
+
 
 type_map = {"电视剧": "tv", "电影": "movie", "动漫": "tv", "少儿": "tv"}
 
@@ -573,8 +578,8 @@ def findEpisodeByNumber(filteredEpisodes: List[Episode], targetEpisode: str):
     return None
 
 
-@alru_cache(maxsize=32, ttl=7200)
-async def get_final_animes(douban_id: str, video_type: str):
+@alru_cache(maxsize=32, ttl=60)
+async def get_final_animes(douban_id: str, video_type: str) -> List[Anime]:
     # 创建实例
     source = await DoubanSource.create(douban_id, video_type)
     print(f"Title: {source.title}")
@@ -586,7 +591,7 @@ async def get_final_animes(douban_id: str, video_type: str):
     # 查找匹配的anime
     for douban_anime in source.animes_from_douban:
         for caiji_anime in source.animes_from_caiji:
-            if source_map.get(douban_anime.source) != caiji_anime.source:
+            if get_eng_source(douban_anime.source) != caiji_anime.source:
                 print(
                     f"Source not match, {douban_anime.source} != {caiji_anime.source}"
                 )
@@ -620,7 +625,7 @@ def is_valid_video_name(title: str) -> bool:
     return True
 
 
-@alru_cache(maxsize=32, ttl=7200)
+@alru_cache(maxsize=32, ttl=60)
 async def get_final_animes_by_title(title: str, video_type: str) -> Anime | None:
     # 创建实例
     source = await CaijiSource.create(title)
@@ -645,7 +650,7 @@ async def get_final_animes_by_title(title: str, video_type: str) -> Anime | None
         return None
 
 
-@alru_cache(maxsize=5, ttl=300)
+@alru_cache(maxsize=5, ttl=60)
 async def get_danmuku(url: str) -> DanmukuResponse:
     danmuku_url = f"https://dmku.hls.one/?ac=dm&url={url}"
     print(f"Fetching danmuku from {danmuku_url}")
