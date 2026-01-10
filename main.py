@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import ORJSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from urllib.parse import urlparse, parse_qs
 import aiohttp
 from dataclasses import dataclass
@@ -10,6 +11,7 @@ import json
 from async_lru import alru_cache
 import asyncio
 from enum import Enum
+
 ############################################################################
 ###############################影视数据结构###############################
 ############################################################################
@@ -746,6 +748,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/web", StaticFiles(directory="front", html=True), name="static")
+
+
+@app.get("/", include_in_schema=False)
+async def root_redirect():
+    return RedirectResponse("/web")
 
 
 @app.get("/api/comment", response_model=DanmukuResponse)

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Danmaku API</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.font.im/css?family=Inter:wght@300;400;500;600;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.font.im/css?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Theme Configuration -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#ffffff", /* Overriding to pure white per request */
+                        "background-dark": "#101922",
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#1e293b",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display min-h-screen flex flex-col overflow-x-hidden selection:bg-primary/20 selection:text-primary">
+    <!-- Navbar -->
+    <nav
+        class="sticky top-0 z-50 border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 group cursor-pointer">
+                <div
+                    class="size-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                    <span class="material-symbols-outlined text-xl">api</span>
+                </div>
+                <h1 class="font-bold text-lg tracking-tight">DanmakuAPI</h1>
+            </div>
+            <div class="flex items-center gap-6">
+                <a class="hidden sm:block text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 transition-colors"
+                    href="https://github.com/SeqCrafter/fetch_danmu">GitHub</a>
+                <a class="flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                    href="/docs">
+                    <span>Docs</span>
+                    <span class="material-symbols-outlined text-sm">arrow_outward</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col items-center justify-start pt-16 pb-24 px-4 sm:px-6">
+        <!-- Hero Section -->
+        <div class="w-full max-w-4xl flex flex-col items-center text-center gap-8 mb-20 animate-fade-in-up">
+            <div class="space-y-4">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                    <span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    v2.0 发布
+                </div>
+                <h1
+                    class="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 dark:text-white leading-[1.1]">
+                    通用 <span class="text-primary">弹幕</span> 获取接口
+                </h1>
+                <p
+                    class="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
+                    通过标题、视频链接或豆瓣ID获取弹幕。 <br class="hidden sm:block" />
+                    由 FastAPI 提供高性能接口服务。
+                </p>
+            </div>
+            <!-- Interactive Form -->
+            <div class="w-full max-w-[600px] mt-4 relative group">
+                <!-- Glow effect behind form -->
+                <div
+                    class="absolute -inset-1 bg-gradient-to-r from-primary/20 via-blue-400/20 to-primary/20 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200">
+                </div>
+                <form
+                    class="relative flex flex-col sm:flex-row items-stretch bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-1.5 gap-1.5 transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50"
+                    id="form">
+                    <!-- ID Input -->
+                    <div
+                        class="flex-1 flex items-center px-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg sm:rounded-r-none border border-transparent focus-within:bg-white dark:focus-within:bg-slate-900 transition-colors">
+                        <span class="material-symbols-outlined text-slate-400 text-[20px]">fingerprint</span>
+                        <input
+                            class="w-full bg-transparent border-none focus:ring-0 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 h-12"
+                            id="douban_id" placeholder="豆瓣ID (e.g. 36172040)" type="text" />
+                    </div>
+                    <!-- Episode Input -->
+                    <div
+                        class="w-full sm:w-32 flex items-center px-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg sm:rounded-none border border-transparent focus-within:bg-white dark:focus-within:bg-slate-900 transition-colors relative">
+                        <!-- Vertical divider for desktop -->
+                        <div class="hidden sm:block absolute left-0 top-3 bottom-3 w-px bg-slate-200 dark:bg-slate-700">
+                        </div>
+                        <span class="text-xs font-semibold text-slate-400 mr-2 uppercase tracking-wide">EP</span>
+                        <input
+                            class="w-full bg-transparent border-none focus:ring-0 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 h-12"
+                            id="episode" placeholder="1" type="number" />
+                    </div>
+                    <!-- Action Button -->
+                    <button
+                        class="h-12 sm:h-auto px-6 bg-primary hover:bg-blue-600 text-white font-semibold rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
+                        type="button" id="button">
+                        <span>获取弹幕</span>
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    </button>
+                </form>
+            </div>
+            <!-- JSON Preview Stub -->
+            <div class="w-full max-w-[600px] mt-2">
+                <div
+                    class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0d131a] p-4 text-left font-mono text-xs text-slate-600 dark:text-slate-400 overflow-x-auto shadow-inner">
+                    <div class="flex gap-1.5 mb-3">
+                        <div class="size-2.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                        <div class="size-2.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                        <div class="size-2.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                    </div>
+                    <pre class="overflow-y-auto max-h-[170px]"><code id="response">{
+  "status": "success",
+  "data": {
+    "title": "Attack on Titan",
+    "episode": 1,
+    "count": 4520,
+    "source": "douban"
+  }
+}</code></pre>
+                </div>
+                <p class="text-center text-xs text-slate-400 mt-3">Try hitting GET to see real data response structure.
+                </p>
+            </div>
+        </div>
+        <!-- Features Grid -->
+        <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 px-4">
+            <!-- Feature 1 -->
+            <div
+                class="group p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+                <div
+                    class="size-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined">search</span>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">通过标题获取弹幕</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    没有豆瓣ID, 只需要传入视频标题也可以获取到弹幕，但是结果无法保证准确性！
+                </p>
+            </div>
+            <!-- Feature 2 -->
+            <div
+                class="group p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+                <div
+                    class="size-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-4 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined">link</span>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">通过链接获取弹幕</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    直接转发视频链接到第三方弹幕接口，取消了 CORS 限制，前端直接获取到弹幕！
+                </p>
+            </div>
+            <!-- Feature 3 -->
+            <div
+                class="group p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+                <div
+                    class="size-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 dark:text-orange-400 mb-4 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined">dataset</span>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">弹幕格式</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    弹幕格式为 JSON, 兼容ArtPlayer 的弹幕插件，可直接使用！
+                </p>
+            </div>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer class="border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 py-12">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                <span class="material-symbols-outlined text-xl">code</span>
+                <span class="text-sm">© 2026 开源项目</span>
+            </div>
+            <div class="flex items-center gap-8">
+                <a class="text-sm text-slate-500 hover:text-primary transition-colors" href="/docs">API Docs</a>
+                <a class="text-sm text-slate-500 hover:text-primary transition-colors"
+                    href="https://github.com/panxiaoguang/fetch_danmu">GitHub</a>
+                <a class="text-sm text-slate-500 hover:text-primary transition-colors" href="/">Status</a>
+                <a class="text-sm text-slate-500 hover:text-primary transition-colors" href="/">License</a>
+            </div>
+        </div>
+    </footer>
+</body>
+<script>
+    const button = document.getElementById('button');
+    button.addEventListener('click', (e) => {
+        document.getElementById('response').textContent = 'loading...';
+        const douban_id = document.getElementById('douban_id').value;
+        const episode = document.getElementById('episode').value;
+        const danmudata = fetch(`/api/douban?douban_id=${douban_id}&episode_number=${episode}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
+    });
+</script>
+
+</html>
