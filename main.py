@@ -15,6 +15,24 @@ from enum import Enum
 ############################################################################
 ###############################影视数据结构###############################
 ############################################################################
+keywords = (
+    r"(特别|惊喜|纳凉)?企划|合伙人手记|超前(营业|vlog)?|速览|vlog|reaction|纯享|加更(版|篇)?|抢先(看|版|集|篇)?|"
+    r"抢鲜|预告|花絮(独家)?|特辑|彩蛋|专访|幕后(故事|花絮|独家)?|直播(陪看|回顾)?|未播(片段)?|衍生|番外|"
+    r"会员(专享|加长|尊享|专属|版)?|片花|精华|看点|速看|解读|影评|解说|吐槽|盘点|拍摄花絮|制作花絮|"
+    r"幕后花絮|未播花絮|独家花絮|花絮特辑|先导预告|终极预告|正式预告|官方预告|彩蛋片段|删减片段|"
+    r"未播片段|番外彩蛋|精彩片段|精彩看点|精彩回顾|精彩集锦|看点解析|看点预告|NG镜头|NG花絮|番外篇|"
+    r"番外特辑|制作特辑|拍摄特辑|幕后特辑|导演特辑|演员特辑|片尾曲|插曲|高光回顾|背景音乐|OST|"
+    r"音乐MV|歌曲MV|前季回顾|剧情回顾|往期回顾|内容总结|剧情盘点|精选合集|剪辑合集|混剪视频|"
+    r"独家专访|演员访谈|导演访谈|主创访谈|媒体采访|发布会采访|采访|陪看(记)?|试看版|短剧|精编|"
+    r"Plus|独家版|特别版|短片|发布会|解忧局|走心局|火锅局|巅峰时刻|坞里都知道|福持目标坞民|"
+    r"观察室|上班那点事儿|周top|赛段|直拍|REACTION|VLOG|全纪录|开播|先导|总宣|展演|集锦|"
+    r"旅行日记|精彩分享|剧情揭秘"
+)
+FILTER_REGEX = re.compile(keywords, re.IGNORECASE)
+
+
+def is_extra_content(regex: re.Pattern, title: str) -> bool:
+    return bool(regex.search(title))
 
 
 @dataclass
@@ -40,47 +58,45 @@ class Anime:
         link2 = {self._process_url(ep.url) for ep in other.episodes if ep.url}
         return len(link1 & link2) > 0
 
+    def _extract_url_identifier(self, url: str, domain: str, pattern: str) -> Optional[str]:
+        """Extract identifier from URL using given pattern"""
+        if domain in url:
+            match = re.findall(pattern, url)
+            return match[0] if match else None
+        return None
+
     def _process_url(self, url: str) -> str:
-        if "iqiyi" in url:
-            content = re.findall(r"v_[^.]+(?=\.html)", url)
-            if content:
-                return content[0]
-            else:
-                return url
-        if "youku" in url:
-            content = re.findall(r"id_[^.]+(?=\.html)", url)
-            if content:
-                return content[0]
-            else:
-                return url
-        if "bilibili" in url:
-            content = re.findall(r"(?<=bangumi/play/)[^?\s]+", url)
-            if content:
-                return content[0]
-            else:
-                return url
-        if "qq" in url:
-            content = re.findall(r"(?<=cover/)[^/]+(?=/)", url)
-            if content:
-                return content[0]
-            else:
-                return url
+        patterns = {
+            "iqiyi": r"v_[^.]+(?=\.html)",
+            "youku": r"id_[^.]+(?=\.html)",
+            "bilibili": r"(?<=bangumi/play/)[^?\s]+",
+            "qq": r"(?<=cover/)[^/]+(?=/)",
+        }
+        for domain, pattern in patterns.items():
+            identifier = self._extract_url_identifier(url, domain, pattern)
+            if identifier is not None:
+                return identifier
         return url
 
 
+SOURCE_NAME_MAP = {
+    "腾讯": "qq",
+    "爱奇艺": "qiyi",
+    "优酷": "youku",
+    "哔哩哔哩": "bilibili",
+}
+
+
 def get_eng_source(source: str) -> str:
-    if "腾讯" in source:
-        return "qq"
-    elif "爱奇艺" in source:
-        return "qiyi"
-    elif "优酷" in source:
-        return "youku"
-    elif "哔哩哔哩" in source:
-        return "bilibili"
+    for chinese_name, eng_name in SOURCE_NAME_MAP.items():
+        if chinese_name in source:
+            return eng_name
     return source
 
 
 type_map = {"电视剧": "tv", "电影": "movie", "动漫": "tv", "少儿": "tv"}
+
+CAIJI_API_URL = "https://gctf.tfdh.top/api.php/provide/vod"
 
 ############################################################################
 ###############################弹幕数据结构###############################
@@ -94,10 +110,109 @@ class DanmukuResponse:
     danum: int
     danmuku: List[List[Any]]
 
+    @classmethod
+    def empty(cls, message: str) -> "DanmukuResponse":
+        """Create an empty response with an error message"""
+        return cls(code=1, name=message, danum=0, danmuku=[])
+
 
 class VideoType(str, Enum):
     tv = "tv"
     movie = "movie"
+
+
+def parse_episode_string(ep_str: str, index: int) -> Optional[Episode]:
+    """Parse a single episode string into an Episode object"""
+    ep_str = ep_str.strip()
+    if not ep_str:
+        return None
+
+    episode_data = ep_str.split("$")
+    if len(episode_data) >= 2:
+        ep_title = episode_data[0]
+        ep_url = episode_data[1]
+    else:
+        ep_title = f"第{index + 1}集"
+        ep_url = episode_data[0] if episode_data else ""
+
+    if ep_url and not is_extra_content(FILTER_REGEX, ep_title):
+        return Episode(title=ep_title, episode_id=str(index + 1), url=ep_url)
+    return None
+
+
+def parse_video_data(video: dict) -> List[Anime]:
+    """Parse video data from caiji API into Anime objects"""
+    animes = []
+    title = video.get("vod_name", "")
+    types = video.get("type_name", "")
+    douban_id = str(video.get("vod_douban_id", ""))
+    play_from = video.get("vod_play_from", "")
+    play_url = video.get("vod_play_url", "")
+
+    if not (play_from and play_url):
+        return animes
+
+    sources = play_from.split("$$$")
+    urls = play_url.split("$$$")
+
+    for i, source in enumerate(sources):
+        if i >= len(urls):
+            break
+
+        platform_episodes = urls[i].split("#")
+        episodes = []
+
+        for j, ep_str in enumerate(platform_episodes):
+            episode = parse_episode_string(ep_str, j)
+            if episode:
+                episodes.append(episode)
+
+        if episodes:
+            animes.append(
+                Anime(
+                    title=title,
+                    source=source.strip(),
+                    types=types,
+                    douban_id=douban_id,
+                    episodes=episodes,
+                )
+            )
+
+    return animes
+
+
+async def fetch_videos_from_caiji(search_title: str) -> List[Anime]:
+    """Fetch and parse videos from caiji API"""
+    animes = []
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                CAIJI_API_URL,
+                params={"ac": "detail", "wd": search_title},
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as resp:
+                if resp.status != 200:
+                    print(f"Failed to get data from caiji: status {resp.status}")
+                    return animes
+
+                text = await resp.text()
+                data = json.loads(text)
+
+                if not data or data.get("code") != 1:
+                    print("Failed to get data from caiji: invalid response")
+                    return animes
+
+                for video in data.get("list", []):
+                    animes.extend(parse_video_data(video))
+
+    except asyncio.TimeoutError:
+        print("Timeout while fetching caiji data")
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error: {e}")
+    except Exception as e:
+        print(f"Error in fetch_videos_from_caiji: {e}")
+
+    return animes
 
 
 ############################################################################
@@ -346,88 +461,7 @@ class DoubanSource:
 
     async def search_videos(self):
         """从采集接口搜索视频"""
-        url = "https://gctf.tfdh.top/api.php/provide/vod"
-
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    url,
-                    params={"ac": "detail", "wd": self.title},
-                    timeout=aiohttp.ClientTimeout(total=15),
-                ) as resp:
-                    if resp.status != 200:
-                        print(f"Failed to get data from caiji: status {resp.status}")
-                        return
-
-                    text = await resp.text()
-                    data = json.loads(text)
-
-                    if not data or data.get("code") != 1:
-                        print("Failed to get data from caiji: invalid response")
-                        return
-
-                    video_list = data.get("list", [])
-
-                    for video in video_list:
-                        title = video.get("vod_name", "")
-                        types = video.get("type_name", "")
-                        douban_id = str(video.get("vod_douban_id", ""))
-                        play_from = video.get("vod_play_from", "")
-                        play_url = video.get("vod_play_url", "")
-
-                        if not (play_from and play_url):
-                            continue
-
-                        sources = play_from.split("$$$")
-                        urls = play_url.split("$$$")
-
-                        for i, source in enumerate(sources):
-                            if i >= len(urls):
-                                break
-
-                            episodes = []
-                            platform_episodes = urls[i].split("#")
-
-                            for j, ep_str in enumerate(platform_episodes):
-                                ep_str = ep_str.strip()
-                                if not ep_str:
-                                    continue
-
-                                episode_data = ep_str.split("$")
-
-                                if len(episode_data) >= 2:
-                                    ep_title = episode_data[0]
-                                    ep_url = episode_data[1]
-                                else:
-                                    ep_title = f"第{j + 1}集"
-                                    ep_url = episode_data[0] if episode_data else ""
-
-                                if ep_url:
-                                    episodes.append(
-                                        Episode(
-                                            title=ep_title,
-                                            episode_id=str(j + 1),
-                                            url=ep_url,
-                                        )
-                                    )
-
-                            if episodes:
-                                self.animes_from_caiji.append(
-                                    Anime(
-                                        title=title,
-                                        source=source.strip(),
-                                        types=types,
-                                        douban_id=douban_id,
-                                        episodes=episodes,
-                                    )
-                                )
-
-        except asyncio.TimeoutError:
-            print("Timeout while fetching caiji data")
-        except json.JSONDecodeError as e:
-            print(f"JSON decode error: {e}")
-        except Exception as e:
-            print(f"Error in search_videos: {e}")
+        self.animes_from_caiji = await fetch_videos_from_caiji(self.title)
 
 
 class CaijiSource:
@@ -443,88 +477,7 @@ class CaijiSource:
 
     async def search_videos(self):
         """从采集接口搜索视频"""
-        url = "https://gctf.tfdh.top/api.php/provide/vod"
-
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    url,
-                    params={"ac": "detail", "wd": self.title},
-                    timeout=aiohttp.ClientTimeout(total=15),
-                ) as resp:
-                    if resp.status != 200:
-                        print(f"Failed to get data from caiji: status {resp.status}")
-                        return
-
-                    text = await resp.text()
-                    data = json.loads(text)
-
-                    if not data or data.get("code") != 1:
-                        print("Failed to get data from caiji: invalid response")
-                        return
-
-                    video_list = data.get("list", [])
-
-                    for video in video_list:
-                        title = video.get("vod_name", "")
-                        types = video.get("type_name", "")
-                        douban_id = str(video.get("vod_douban_id", ""))
-                        play_from = video.get("vod_play_from", "")
-                        play_url = video.get("vod_play_url", "")
-
-                        if not (play_from and play_url):
-                            continue
-
-                        sources = play_from.split("$$$")
-                        urls = play_url.split("$$$")
-
-                        for i, source in enumerate(sources):
-                            if i >= len(urls):
-                                break
-
-                            episodes = []
-                            platform_episodes = urls[i].split("#")
-
-                            for j, ep_str in enumerate(platform_episodes):
-                                ep_str = ep_str.strip()
-                                if not ep_str:
-                                    continue
-
-                                episode_data = ep_str.split("$")
-
-                                if len(episode_data) >= 2:
-                                    ep_title = episode_data[0]
-                                    ep_url = episode_data[1]
-                                else:
-                                    ep_title = f"第{j + 1}集"
-                                    ep_url = episode_data[0] if episode_data else ""
-
-                                if ep_url:
-                                    episodes.append(
-                                        Episode(
-                                            title=ep_title,
-                                            episode_id=str(j + 1),
-                                            url=ep_url,
-                                        )
-                                    )
-
-                            if episodes:
-                                self.animes_from_caiji.append(
-                                    Anime(
-                                        title=title,
-                                        source=source.strip(),
-                                        types=types,
-                                        douban_id=douban_id,
-                                        episodes=episodes,
-                                    )
-                                )
-
-        except asyncio.TimeoutError:
-            print("Timeout while fetching caiji data")
-        except json.JSONDecodeError as e:
-            print(f"JSON decode error: {e}")
-        except Exception as e:
-            print(f"Error in search_videos: {e}")
+        self.animes_from_caiji = await fetch_videos_from_caiji(self.title)
 
 
 def extract_episode_number_from_title(episode_title: str) -> Optional[str]:
@@ -564,19 +517,21 @@ def extract_episode_number_from_title(episode_title: str) -> Optional[str]:
     return None
 
 
-def findEpisodeByNumber(filteredEpisodes: List[Episode], targetEpisode: str):
-    for episode in filteredEpisodes:
-        ## 先尝试按数字匹配
-        extractedNumber = extract_episode_number_from_title(episode.title)
-        print(f"Extracted number: {extractedNumber}")
+def find_episode_by_number(episodes: List[Episode], target: str) -> Optional[Episode]:
+    """Find episode by extracted number from title, falling back to episode_id"""
+    # First try matching by extracted episode number from title
+    for episode in episodes:
+        extracted = extract_episode_number_from_title(episode.title)
+        print(f"Extracted number: {extracted}")
         print(f"original number: {episode.title}")
-        if extractedNumber == targetEpisode:
+        if extracted == target:
             return episode
-    ## 必须再次进入循环，因为是不同的检查
-    for episode in filteredEpisodes:
-        ## 如果数字匹配失败，尝试按 episode_id 匹配
-        if episode.episode_id == targetEpisode:
+
+    # Fall back to matching by episode_id
+    for episode in episodes:
+        if episode.episode_id == target:
             return episode
+
     return None
 
 
@@ -615,41 +570,23 @@ async def get_final_animes(douban_id: str, video_type: str) -> List[Anime]:
     return final_animes
 
 
-def is_valid_video_name(title: str) -> bool:
-    if (
-        "解说" in title
-        or "预告" in title
-        or "花絮" in title
-        or "动态漫" in title
-        or "之精彩" in title
-    ):
-        return False
-    return True
-
-
 @alru_cache(maxsize=32, ttl=60)
 async def get_final_animes_by_title(title: str, video_type: str) -> Anime | None:
-    # 创建实例
     source = await CaijiSource.create(title)
     print(f"Title: {source.title}")
     print(f"Found {len(source.animes_from_caiji)} animes from caiji")
-    # 存储最终匹配的采集源anime列表
-    if source.animes_from_caiji:
-        for caiji_anime in source.animes_from_caiji:
-            if not is_valid_video_name(caiji_anime.title):
-                continue
-            if (
-                type_map.get(caiji_anime.types) == video_type
-                and caiji_anime.title == title
-            ):
-                return caiji_anime
-            ## 如果title不能完全匹配，尝试部分匹配
-            if type_map.get(caiji_anime.types) == video_type and (
-                title in caiji_anime.title or caiji_anime.title in title
-            ):
-                return caiji_anime
-    else:
-        return None
+
+    for caiji_anime in source.animes_from_caiji:
+        if type_map.get(caiji_anime.types) != video_type:
+            continue
+        # Exact match takes priority
+        if caiji_anime.title == title:
+            return caiji_anime
+        # Partial match as fallback
+        if title in caiji_anime.title or caiji_anime.title in title:
+            return caiji_anime
+
+    return None
 
 
 @alru_cache(maxsize=5, ttl=60)
@@ -661,14 +598,8 @@ async def get_danmuku(url: str) -> DanmukuResponse:
             if response.status == 200:
                 danmuku_data = await response.json()
                 return DanmukuResponse(**danmuku_data)
-            else:
-                print(f"dmku return no data: {response.status}")
-                return DanmukuResponse(
-                    code=1,
-                    name="Failed to fetch danmuku from dmku.hls.one",
-                    danum=0,
-                    danmuku=[],
-                )
+            print(f"dmku return no data: {response.status}")
+            return DanmukuResponse.empty("Failed to fetch danmuku from dmku.hls.one")
 
 
 async def get_danmu_by_douban_id(
@@ -677,26 +608,16 @@ async def get_danmu_by_douban_id(
     final_animes = await get_final_animes(douban_id, video_type)
     if not final_animes:
         print(f"No final animes found for {douban_id}")
-        return DanmukuResponse(
-            code=1,
-            name="No final animes found",
-            danum=0,
-            danmuku=[],
-        )
-    else:
-        anime = final_animes[0]
-        print(f"only use the first anime: {anime.source}")
-        episode = findEpisodeByNumber(anime.episodes, episode_number)
-        if not episode:
-            print(f"No episode found for {episode_number}")
-            return DanmukuResponse(
-                code=1,
-                name="No episode found",
-                danum=0,
-                danmuku=[],
-            )
-        danmuku_data = await get_danmuku(episode.url)
-        return danmuku_data
+        return DanmukuResponse.empty("No final animes found")
+
+    anime = final_animes[0]
+    print(f"only use the first anime: {anime.source}")
+    episode = find_episode_by_number(anime.episodes, episode_number)
+    if not episode:
+        print(f"No episode found for {episode_number}")
+        return DanmukuResponse.empty("No episode found")
+
+    return await get_danmuku(episode.url)
 
 
 async def get_danmu_by_title(
@@ -705,24 +626,14 @@ async def get_danmu_by_title(
     final_anime = await get_final_animes_by_title(title, video_type)
     if not final_anime:
         print(f"No final anime found for {title}")
-        return DanmukuResponse(
-            code=1,
-            name="No final anime found",
-            danum=0,
-            danmuku=[],
-        )
-    else:
-        episode = findEpisodeByNumber(final_anime.episodes, episode_number)
-        if not episode:
-            print(f"No episode found for {episode_number}")
-            return DanmukuResponse(
-                code=1,
-                name="No episode found",
-                danum=0,
-                danmuku=[],
-            )
-        danmuku_data = await get_danmuku(episode.url)
-        return danmuku_data
+        return DanmukuResponse.empty("No final anime found")
+
+    episode = find_episode_by_number(final_anime.episodes, episode_number)
+    if not episode:
+        print(f"No episode found for {episode_number}")
+        return DanmukuResponse.empty("No episode found")
+
+    return await get_danmuku(episode.url)
 
 
 ############################################################################
